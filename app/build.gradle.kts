@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "com.studentpay.manager"
-    compileSdk = 37
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.studentpay.manager"
