@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Offline Student Payment Management PWA">
+    <meta name="theme-color" content="#2563eb">
+    <title>Student Pay Manager</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="icons/icon-192x192.png">
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+    <!-- jsPDF for PDF Generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+</head>
+<body>
+    <!-- Activation Overlay (First Time Setup) -->
+    <div id="activationOverlay" class="security-overlay" style="z-index: 5000;">
+        <div class="security-content">
+            <h2>🔴 App Locked</h2>
+            <p>This copy is not activated. Contact Admin.</p>
+            
+            <div class="device-id-box">
+                <small>RELAY THIS DEVICE ID:</small>
+                <h1 id="deviceIdDisplay" style="letter-spacing: 5px; color: var(--primary);">----</h1>
+            </div>
+
+            <div class="form-group mb-4">
+                <input type="number" id="activationCode" placeholder="Enter Activation Code" class="password-input-large" style="text-align: center;">
+            </div>
+            <button id="activateBtn" class="btn-primary btn-block">Activate Now</button>
+            <p id="activationError" style="color: red; margin-top: 10px; display: none;">Invalid Code!</p>
+        </div>
+    </div>
+
+    <!-- Security Overlay -->
+    <div id="securityOverlay" class="security-overlay">
+        <div class="security-content" style="max-width: 360px;">
+            <h2>Enter Password</h2>
+            <div class="form-group mb-4">
+                <input type="password" id="securityPin" placeholder="Enter password..." class="password-input-large">
+                <label class="show-password-toggle">
+                    <input type="checkbox" id="showLoginPin"> Show Password
+                </label>
+            </div>
+            <button id="unlockBtn" class="btn-primary btn-block">Unlock App</button>
+        </div>
+    </div>
+
+    <header class="app-header">
+        <h1>Student Manager</h1>
+    </header>
+
+    <main id="mainContainer">
+        <div id="loading" class="loading-spinner">Loading...</div>
+        
+        <!-- VIEW SECTION (Status) -->
+        <section id="viewSection">
+            <!-- Global Filter Bar -->
+            <div class="filter-bar">
+                <h2 class="section-title">Dashboard</h2>
+                <div class="filter-controls">
+                    <select id="dashboardMonth" class="month-select-small">
+                        <!-- Options generated JS -->
+                    </select>
+                    <select id="dashboardYear" class="month-select-small">
+                        <!-- Options generated JS -->
+                    </select>
+                </div>
+            </div>
+
+            <!-- Analytics Dashboard -->
+            <div id="dashboardStats" class="dashboard-stats hidden">
+                <div class="dashboard-header--simple">
+                    <div class="card-label">Overview Stats</div>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalEarned">0</div>
+                        <div class="stat-label">Total Earned</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="countPaid">0</div>
+                        <div class="stat-label">Paid</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="countDue">0</div>
+                        <div class="stat-label">Due</div>
+                    </div>
+                </div>
+                <div style="margin-top: 0.5rem; text-align: center;">
+                    <small style="color: #64748b; font-size: 0.75rem;">
+                        ℹ️ Showing data for selected Month/Year above
+                    </small>
+                </div>
+            </div>
+
+            <div id="viewList" class="student-list">
+                <!-- View items injected here -->
+            </div>
+            <div id="viewEmptyState" class="empty-state hidden">
+                <p>No students found.</p>
+                <p class="hint-text">Go to Settings to add students.</p>
+            </div>
+        </section>
+
+        <!-- UPDATE SECTION (Payment Action) -->
+        <section id="updateSection" class="hidden">
+            <div class="update-controls">
+                <label for="collectionMonth">Selecting Payment For:</label>
+                <select id="collectionMonth" class="month-select">
+                    <!-- Options Jan-Dec generated by JS -->
+                </select>
+                <select id="collectionYear" class="month-select">
+                    <!-- Options generated JS -->
+                </select>
+                
+            </div>
+            <div id="updateList" class="student-list">
+                <!-- Update items injected here -->
+            </div>
+        </section>
+
+        <!-- SETTINGS SECTION (Management) -->
+        <section id="settingsSection" class="hidden">
+            <button id="addStudentBtn" class="btn-primary btn-block mb-4">
+                <span>+ Add New Student</span>
+            </button>
+            <button id="changePinBtn" class="btn-primary btn-block mb-4 btn-secondary">
+                <span>🔒 Change Password</span>
+            </button>
+            <button id="helpBtn" class="btn-primary btn-block mb-4" style="background-color: var(--status-paid);" onclick="document.getElementById('helpModal').classList.remove('hidden')">
+                <span>📖 ব্যবহার বিধি (User Manual)</span>
+            </button>
+            
+            <button id="exportOldDataBtn" class="btn-primary btn-block mb-4 btn-secondary" onclick="exportOldData().catch(function(e){alert('Export failed: '+e.message)})">
+                <span>⬇ Export data for the new Android app</span>
+            </button>
+
+            <h2 class="section-title">Manage Students</h2>
+            <div id="settingsList" class="student-list">
+                <!-- Management items injected here -->
+            </div>
+
+            <!-- Reports Section -->
+            <div class="reports-section">
+                <h2 class="section-title">📄 Generate Reports</h2>
+                
+                <div class="form-group">
+                    <label for="reportType">Report Type</label>
+                    <select id="reportType" class="month-select">
+                        <option value="student">🧑‍🎓 Individual Student Report</option>
+                        <option value="monthly">📅 Monthly Report</option>
+                        <option value="yearly">📆 Yearly Summary</option>
+                    </select>
+                </div>
+
+                <div class="form-group" id="studentSelectGroup">
+                    <label for="reportStudent">Select Student</label>
+                    <select id="reportStudent" class="month-select">
+                        <!-- Options generated by JS -->
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="reportYear">Year</label>
+                    <select id="reportYear" class="month-select">
+                        <!-- Options generated by JS -->
+                    </select>
+                </div>
+
+                <div class="form-group" id="monthSelectGroup">
+                    <label for="reportMonth">Month</label>
+                    <select id="reportMonth" class="month-select">
+                        <!-- Options generated by JS -->
+                    </select>
+                </div>
+
+                <div class="report-actions">
+                    <button id="viewReportBtn" class="btn-secondary">👁️ View Report</button>
+                    <button id="downloadReportBtn" class="btn-primary">⬇️ Download PDF</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <button class="nav-btn active" data-target="viewSection">
+            <span class="nav-icon">📊</span>
+            <span>Status</span>
+        </button>
+        <button class="nav-btn" data-target="updateSection">
+            <span class="nav-icon">💰</span>
+            <span>Update</span>
+        </button>
+        <button class="nav-btn" data-target="settingsSection">
+            <span class="nav-icon">⚙️</span>
+            <span>Settings</span>
+        </button>
+    </nav>
+
+    <!-- Modal for Adding/Editing Student -->
+    <div id="studentModal" class="modal hidden">
+        <div class="modal-content">
+            <h2 id="modalTitle">Add Student</h2>
+            <form id="studentForm">
+                <input type="hidden" id="studentId">
+                <div class="form-group">
+                    <label for="studentName">Name</label>
+                    <input type="text" id="studentName" required placeholder="Enter student name">
+                </div>
+                <div class="form-group">
+                    <label for="studentFee">Monthly Fee (Tk)</label>
+                    <input type="number" id="studentFee" required placeholder="0" min="0">
+                </div>
+                <div class="form-group">
+                    <label>Payment Type</label>
+                    <div class="radio-group">
+                        <label class="radio-label">
+                            <input type="radio" name="paymentType" value="A" checked>
+                            <span>Type A (Current Month)</span>
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="paymentType" value="B">
+                            <span>Type B (Next Month)</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" id="cancelBtn" class="btn-text">Cancel</button>
+                    <button type="submit" class="btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal for Changing Password -->
+    <div id="pinModal" class="modal hidden">
+        <div class="modal-content">
+            <h2>Change Password</h2>
+            <form id="pinForm">
+                <div class="form-group">
+                    <label for="oldPin">Current Password</label>
+                    <input type="password" id="oldPin" required placeholder="Enter current password">
+                </div>
+                <div class="form-group">
+                    <label for="newPin">New Password</label>
+                    <input type="password" id="newPin" required placeholder="Enter new password">
+                </div>
+                <label class="show-password-toggle">
+                    <input type="checkbox" id="showChangePin"> Show Passwords
+                </label>
+                <div class="form-actions">
+                    <button type="button" id="cancelPinBtn" class="btn-text">Cancel</button>
+                    <button type="submit" class="btn-primary">Update</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="db.js"></script>
+    <script src="app.js"></script>
+    <script>window.__SPM_NO_AUTORUN = true;</script>
+    <script src="export-old-data.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('SW registered:', reg.scope))
+                    .catch(err => console.log('SW registration failed:', err));
+            });
+        }
+    </script>
+    <!-- Help Modal -->
+    <div id="helpModal" class="modal hidden">
+        <div class="modal-content" style="max-height: 80vh; overflow-y: auto;">
+            <h2 class="modal-title">📖 ব্যবহার বিধি & Help</h2>
+            <div class="help-steps" style="text-align: left; margin-top: 1rem;">
+                <div class="step-item" style="margin-bottom: 1.5rem; border-bottom: 1px solid #eee; padding-bottom: 1rem;">
+                    <h3 style="color: var(--primary); margin-bottom: 0.5rem;">১. নতুন ছাত্র ভর্তি করবেন কীভাবে?</h3>
+                    <p style="color: #555;">Settings ট্যাবে যান > <b>"Add New Student"</b> এ ক্লিক করুন > নাম এবং মাসিক বেতন লিখুন > Add চাপুন।</p>
+                </div>
+                <div class="step-item" style="margin-bottom: 1.5rem; border-bottom: 1px solid #eee; padding-bottom: 1rem;">
+                    <h3 style="color: var(--primary); margin-bottom: 0.5rem;">২. পেমেন্ট আপডেট করবেন কীভাবে?</h3>
+                    <p style="color: #555;">নিচে মাঝখানের <b>"Update"</b> (টাকার ব্যাগ আইকন) ট্যাবে যান > উপরের ড্রপডাউন থেকে সঠিক মাস ও বছর সিলেক্ট করুন > ছাত্রের নামের পাশে বক্সে টিক দিন।</p>
+                </div>
+                <div class="step-item" style="margin-bottom: 1.5rem; border-bottom: 1px solid #eee; padding-bottom: 1rem;">
+                    <h3 style="color: var(--primary); margin-bottom: 0.5rem;">৩. রিপোর্ট দেখবেন কীভাবে?</h3>
+                    <p style="color: #555;">Settings ট্যাবে যান > একটু নিচে <b>"Generate Reports"</b> সেকশন পাবেন > Student বা Monthly রিপোর্ট সিলেক্ট করুন > View Report চাপুন।</p>
+                </div>
+                <div class="step-item" style="margin-bottom: 1.5rem; border-bottom: 1px solid #eee; padding-bottom: 1rem;">
+                    <h3 style="color: var(--primary); margin-bottom: 0.5rem;">৪. অ্যাপ লক পাসওয়ার্ড বদলাবেন কীভাবে?</h3>
+                    <p style="color: #555;">Settings ট্যাবে যান > <b>"Change Password"</b> এ ক্লিক করুন > প্রথমে পুরাতন পিন, পরে নতুন পিন দিন।</p>
+                </div>
+                <div class="step-item">
+                    <h3 style="color: var(--status-due); margin-bottom: 0.5rem;">⚠️ জরুরি নোট</h3>
+                    <p style="color: #555;">আপনার অ্যাপের <b>Device ID এবং অ্যাক্টিভেশন কোড</b> কোথাও লিখে রাখুন। অ্যাপ মুছে গেলে আবার লাগতে পারে।</p>
+                </div>
+            </div>
+            <div class="modal-actions" style="margin-top: 1.5rem;">
+                <button id="closeHelpBtn" class="btn-secondary btn-block" onclick="document.getElementById('helpModal').classList.add('hidden')">বুঝেছি (Close)</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

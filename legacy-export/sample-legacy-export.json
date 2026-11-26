@@ -1,0 +1,57 @@
+{
+ "app": "StudentPayManager",
+ "formatVersion": 1,
+ "source": "legacy-pwa",
+ "exportedAt": "2026-11-25T08:11:07.028Z",
+ "students": [
+  {
+   "name": "Rafi Ahmed",
+   "payment_type": "A",
+   "monthly_fee": 500,
+   "id": 1
+  },
+  {
+   "name": "মিনা আক্তার",
+   "payment_type": "B",
+   "monthly_fee": 700,
+   "id": 2
+  },
+  {
+   "name": "No Fee",
+   "payment_type": "A",
+   "id": 3
+  }
+ ],
+ "payments": [
+  {
+   "student_id": 1,
+   "year": 2026,
+   "month_paid_for": 9,
+   "paid_on_month": 9,
+   "date": "2026-10-09T00:00:00.000Z",
+   "id": 1
+  },
+  {
+   "student_id": 1,
+   "year": 2026,
+   "month_paid_for": 10,
+   "paid_on_month": 10,
+   "date": "2026-11-03T08:00:00.000Z",
+   "id": 2
+  },
+  {
+   "student_id": 2,
+   "year": 2025,
+   "month_paid_for": 11,
+   "paid_on_month": 0,
+   "date": "2026-01-04T09:00:00.000Z",
+   "id": 3
+  },
+  {
+   "student_id": 2,
+   "year": 2026,
+   "month_paid_for": 3,
+   "id": 4
+  }
+ ]
+}

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Students/payments and settings may be restored by Android backup. The PIN verifier lives in
+     noBackupFilesDir (never backed up), so a restored install asks the user to create a new PIN. -->
+<data-extraction-rules>
+    <cloud-backup />
+    <device-transfer />
+</data-extraction-rules>
