@@ -5,7 +5,7 @@ Navigation Compose. No network permission, no third-party libraries beyond Andro
 
 ## Read this first: what has and has not been verified
 
-**Verified here (compiled and executed, 68 tests passing):** the whole domain layer (payment rules, dashboard maths,
+**Verified here (compiled and executed, 78 tests passing):** the whole domain layer (payment rules, dashboard maths,
 reports and PDF content, validation, PIN policy/hash/lock-out, backup validation), the JSON backup codec, and the
 migration path *from the real old `db.js`* (old data → export script → importer).
 
@@ -55,6 +55,29 @@ Unit tests: `./gradlew :app:testDebugUnitTest`.
    experimental Expressive components (utility app, no compiler to check them).
 6. Auto Backup is on for the database/settings; the PIN is deliberately excluded, so a restored phone asks for a new PIN.
 
+## Recording and removing payments (Payments screen)
+Nothing is saved by selecting. Tick **one or more** students (or *Select all shown*), then:
+- **Record (n)** opens a confirmation listing every payment with an **editable amount** (prefilled with the
+  student's monthly fee). What you type is exactly what is stored on the payment; the student's fee does not
+  change. Amounts must be whole Taka, 0–10,000,000, otherwise *Record* stays disabled.
+- **Remove (n)** opens a confirmation listing exactly which payments (and the total) will be removed. After a removal
+  an **Undo** button restores them with their original dates and amounts.
+All payments of one confirmation are written in a single transaction (all or nothing). Someone who already has a
+payment for that month is skipped, never overwritten.
+
+## Reports: Collected vs Actual
+Reports have an "Amounts shown" switch:
+- **Collected (default)**: money *received* in the selected month/year. This is the same number as Home's
+  "Collected in …" and a test asserts the Monthly Collected report equals the dashboard.
+- **Actual**: fees that *belong* to the selected month/year, whenever they were received (the old reports' meaning).
+They differ for Type B students: a fee received in March 2026 is *Collected* in March but *Actual* for February;
+received in January 2027 it is Collected in 2027 but Actual for December 2026 (a different year).
+The receiving month is read from the stored `paid_on_month` (so it stays right even if a student's type is edited
+later); very old records without it fall back to the student's type. Every PDF states its basis on the page.
+Collected-basis reports: *Monthly* (every active student Paid/Due as on Home, plus deleted students who paid, with a
+"For" column), *Yearly* (money received per month), *Student* (every payment received in the year: month received,
+month it is for, date, amount). No database change was needed.
+
 ## Deleting a student keeps the income
 In the old app, deleting a student also erased all their payments, so the money you had received from them
 disappeared from every total. Now **Delete hides the student but keeps every payment**:
@@ -95,7 +118,8 @@ legacy-export/  export script, real sample output, patched copy of the old app
 ## Device QA checklist (not run: no device available)
 First run PIN setup · wrong PIN waits · relaunch asks PIN · Change PIN · Forgot PIN erase · add/edit/delete student (check the income stays on Home, in the Monthly/Yearly PDFs, and the student appears under
 Settings → Deleted students; then Restore) ·
-tick/untick/Undo · Type A and Type B in January and December · Home numbers change with month/year · due filter ·
+select several students → Record (change an amount, check the saved amount on Home/PDF) → Remove → Undo ·
+Collected vs Actual PDFs for a Type B student around December/January · Type A and Type B in January and December · Home numbers change with month/year · due filter ·
 student detail grid · three PDFs preview and save (include a Bengali name and 60+ students for multi-page) ·
 export then restore (and a restore of the sample in `legacy-export/`) · airplane mode · rotate · dark theme ·
 small phone (320dp) and large font scale · TalkBack through lock screen and Payments.

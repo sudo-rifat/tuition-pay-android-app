@@ -10,7 +10,7 @@ compiled and run (see README). "Device QA" = needs a manual check on a phone.
 | 3 | Type A "Current Month": pay month = selected month (`getTargetMonthIndex`) | `PaymentRules.targetMonth/Year` | Verified |
 | 4 | Type B (old label "Next Month", now **"Previous Month"**): pay month = the immediately preceding month; collected Jan → previous Dec (`getTargetMonthIndex/Year`) | same function, logic unchanged; label corrected everywhere | Verified |
 | 5 | Unique payment per student+year+month (`student_year_month` index) | UNIQUE index; `markPaid` upserts like `addPayment` | Verified (logic) / Device QA |
-| 6 | Tick = add payment with date now; untick = delete (`handleCheckbox`) | Payments screen; untick adds **Undo** | Device QA |
+| 6 | Tick = add payment with date now; untick = delete (`handleCheckbox`), immediately | Payments screen: select one or many → **Record / Remove with a confirmation**, editable amount per payment, Undo after removal | Device QA (amount parsing verified) |
 | 7 | Dashboard stats per selected month: paid, due, total earned (old: Σ *current* fee) | `Dashboard.compute`, now Σ **recorded** amounts | Verified |
 | 8 | 12-month status grid; past year all due, current year due up to current month, future grey | `Dashboard.monthStates`, shown on Student detail | Verified |
 | 9 | Month/year selectors; year range now-1 … now+5 | Month stepper + picker; `SelectionBounds.collection` | Verified |
@@ -27,10 +27,12 @@ compiled and run (see README). "Device QA" = needs a manual check on a phone.
 | 20 | Legacy data migration `runMigration` (missing `date` → now) | Importer gives missing dates the import time; reports it | Verified |
 | 21 | *(new)* Fee on each payment; fee edits never change past totals | `payments.amount`, DB v2 + migration, backup field `amount` | Verified (logic, SQL) |
 | 22 | *(new)* Deleted students keep their income: counted on Home/Payments, in Monthly/Yearly reports and backups; restorable | `students.deleted_at`, DB v3 + migration, backup field `deleted_at`, Deleted students screen | Verified (logic, SQL) / Device QA |
+| 23 | *(new)* Reports show **Collected** (default, received in the period) or **Actual** (belongs to the period) | `Reports.*Collected`, `Payment.collectionPeriod`, `ReportBasis` | Verified |
 
 ## Intentional differences (all flagged in the README)
 - Reversing a payment can be undone (new).
 - Fee changes no longer rewrite history: the amount is recorded on each payment (old app recomputed from the current fee).
+- Payments are recorded/removed only after a confirmation (one or many at a time); the old app saved on tick.
 - Student report honours the year (the old one ignored it, as the brief asks for year selection).
 - Monthly report also lists students who are due (the brief asks for due totals).
 - Filter chips All / Due / Paid on Home and Payments (brief: "easy to identify unpaid students").

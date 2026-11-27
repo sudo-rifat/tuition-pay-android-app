@@ -4,6 +4,7 @@ import androidx.room.withTransaction
 import com.studentpay.manager.domain.DeletedStudentSummary
 import com.studentpay.manager.domain.ImportPlan
 import com.studentpay.manager.domain.Payment
+import com.studentpay.manager.domain.PaymentEntry
 import com.studentpay.manager.domain.PaymentRules
 import com.studentpay.manager.domain.PaymentType
 import com.studentpay.manager.domain.Student
@@ -57,6 +58,9 @@ class StudentPayRepository(
     suspend fun activeStudentCount(): Int = students.getAll().count { it.deletedAt == null }
     suspend fun allPayments(): List<Payment> = payments.getAll().map { it.toDomain() }
     suspend fun paymentsForYear(year: Int): List<Payment> = payments.getForYear(year).map { it.toDomain() }
+    /** Payments whose "paid for" year is in [fromYear, toYear] (collected-basis reports need year-1..year). */
+    suspend fun paymentsBetween(fromYear: Int, toYear: Int): List<Payment> =
+        payments.getYears(fromYear, toYear).map { it.toDomain() }
     suspend fun paymentCountFor(studentId: Long): Int = payments.countForStudent(studentId)
     suspend fun paymentTotalFor(studentId: Long): Long = payments.totalForStudent(studentId)
 
@@ -89,44 +93,50 @@ class StudentPayRepository(
     // ---------- payments ----------
 
     /**
-     * Marks [student] as paid for the selected COLLECTION month/year. The stored period is derived with
-     * [PaymentRules] (Type A / Type B) and the amount recorded is the student's fee RIGHT NOW. If the record
-     * already exists only its date is refreshed (legacy upsert); its amount is kept. The UNIQUE index
-     * guarantees there is never a second record.
+     * Records payments for the selected COLLECTION month/year, all in ONE transaction (all or nothing).
+     * For each entry the stored period is derived with [PaymentRules] (Type A / Type B); the amount saved is
+     * [PaymentEntry.amount], which the user may have changed from the student's monthly fee. The student's fee
+     * itself is not touched. A student who already has a payment for that period is skipped (never overwritten,
+     * the UNIQUE index guarantees one record). Returns the payments that were created.
      */
-    suspend fun markPaid(student: Student, collectionMonth: Int, collectionYear: Int): Payment =
-        db.withTransaction {
-            val target = PaymentRules.targetPeriod(student.type, collectionMonth, collectionYear)
+    suspend fun recordPayments(entries: List<PaymentEntry>, collectionMonth: Int, collectionYear: Int): List<Payment> {
+        entries.forEach { require(it.amount in 0..StudentValidator.MAX_FEE) { "Invalid amount" } }
+        return db.withTransaction {
             val now = clock()
-            val existing = payments.find(student.id, target.year, target.month)
-            if (existing != null) {
-                payments.updateDate(existing.id, now)
-                existing.copy(paidAt = now).toDomain()
-            } else {
-                val entity = PaymentEntity(
-                    studentId = student.id,
-                    year = target.year,
-                    monthPaidFor = target.month,
-                    paidOnMonth = collectionMonth,
-                    paidAt = now,
-                    amount = student.monthlyFee,
-                )
-                entity.copy(id = payments.insert(entity)).toDomain()
+            entries.mapNotNull { entry ->
+                val student = entry.student
+                val target = PaymentRules.targetPeriod(student.type, collectionMonth, collectionYear)
+                if (payments.find(student.id, target.year, target.month) != null) {
+                    null
+                } else {
+                    val entity = PaymentEntity(
+                        studentId = student.id,
+                        year = target.year,
+                        monthPaidFor = target.month,
+                        paidOnMonth = collectionMonth,
+                        paidAt = now,
+                        amount = entry.amount,
+                    )
+                    entity.copy(id = payments.insert(entity)).toDomain()
+                }
+            }
+        }
+    }
+
+    /** Reverses payments in one transaction. Returns exactly what was removed (so the UI can offer Undo). */
+    suspend fun removePayments(students: List<Student>, collectionMonth: Int, collectionYear: Int): List<Payment> =
+        db.withTransaction {
+            students.mapNotNull { student ->
+                val target = PaymentRules.targetPeriod(student.type, collectionMonth, collectionYear)
+                val existing = payments.find(student.id, target.year, target.month)
+                if (existing != null) payments.delete(existing.id)
+                existing?.toDomain()
             }
         }
 
-    /** Reverses a payment. Returns the removed record (so the UI can offer Undo) or null if none existed. */
-    suspend fun removePayment(student: Student, collectionMonth: Int, collectionYear: Int): Payment? =
-        db.withTransaction {
-            val target = PaymentRules.targetPeriod(student.type, collectionMonth, collectionYear)
-            val existing = payments.find(student.id, target.year, target.month)
-            if (existing != null) payments.delete(existing.id)
-            existing?.toDomain()
-        }
-
-    /** Undo of [removePayment]: puts the exact record back (same date). No-op if one exists again. */
-    suspend fun restorePayment(payment: Payment) {
-        payments.insertIgnore(payment.copy(id = 0).toEntity())
+    /** Undo of [removePayments]: puts the exact records back (same date and amount) in one transaction. */
+    suspend fun restorePayments(removed: List<Payment>) {
+        db.withTransaction { removed.forEach { payments.insertIgnore(it.copy(id = 0).toEntity()) } }
     }
 
     // ---------- backup / restore ----------

@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.Uri
 import com.studentpay.manager.data.StudentPayRepository
 import com.studentpay.manager.domain.PdfReportSpec
+import com.studentpay.manager.domain.ReportBasis
 import com.studentpay.manager.domain.Period
 import com.studentpay.manager.domain.ReportFormat
 import com.studentpay.manager.domain.ReportSpecs
@@ -29,21 +30,43 @@ class ReportService(
         return Period(d.year, d.monthValue - 1)
     }
 
-    suspend fun studentReport(studentId: Long, year: Int): File {
+    /** [basis] COLLECTED = money received in the period; ACTUAL = fees belonging to the period. */
+    suspend fun studentReport(studentId: Long, year: Int, basis: ReportBasis): File {
         val student = repository.getStudent(studentId) ?: throw IllegalStateException("Student not found")
-        val report = Reports.student(student, repository.allPayments(), year, today())
         val generatedOn = ReportFormat.date(clock(), zone())
-        return render(ReportSpecs.student(report, generatedOn, zone()))
+        val spec = when (basis) {
+            ReportBasis.ACTUAL ->
+                ReportSpecs.student(Reports.student(student, repository.allPayments(), year, today()), generatedOn, zone())
+            ReportBasis.COLLECTED ->
+                ReportSpecs.studentCollected(
+                    Reports.studentCollected(student, repository.paymentsBetween(year - 1, year), year), generatedOn, zone(),
+                )
+        }
+        return render(spec)
     }
 
-    suspend fun monthlyReport(year: Int, month: Int): File {
-        val report = Reports.monthly(repository.allStudents(), repository.paymentsForYear(year), year, month)
-        return render(ReportSpecs.monthly(report, zone()))
+    suspend fun monthlyReport(year: Int, month: Int, basis: ReportBasis): File {
+        val students = repository.allStudents()
+        val spec = when (basis) {
+            ReportBasis.ACTUAL ->
+                ReportSpecs.monthly(Reports.monthly(students, repository.paymentsForYear(year), year, month), zone())
+            ReportBasis.COLLECTED ->
+                // A Type B fee received in January is stored for the previous December, so look at year-1 too.
+                ReportSpecs.monthlyCollected(
+                    Reports.monthlyCollected(students, repository.paymentsBetween(year - 1, year), year, month), zone(),
+                )
+        }
+        return render(spec)
     }
 
-    suspend fun yearlyReport(year: Int): File {
-        val report = Reports.yearly(repository.allStudents(), repository.paymentsForYear(year), year)
-        return render(ReportSpecs.yearly(report))
+    suspend fun yearlyReport(year: Int, basis: ReportBasis): File {
+        val students = repository.allStudents()
+        val spec = when (basis) {
+            ReportBasis.ACTUAL -> ReportSpecs.yearly(Reports.yearly(students, repository.paymentsForYear(year), year))
+            ReportBasis.COLLECTED ->
+                ReportSpecs.yearlyCollected(Reports.yearlyCollected(students, repository.paymentsBetween(year - 1, year), year))
+        }
+        return render(spec)
     }
 
     /** Copies a generated report to a document the user picked with the system file picker. */

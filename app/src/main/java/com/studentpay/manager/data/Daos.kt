@@ -65,6 +65,9 @@ interface PaymentDao {
     @Query("SELECT * FROM payments WHERE year = :year")
     suspend fun getForYear(year: Int): List<PaymentEntity>
 
+    @Query("SELECT * FROM payments WHERE year BETWEEN :fromYear AND :toYear")
+    suspend fun getYears(fromYear: Int, toYear: Int): List<PaymentEntity>
+
     @Query("SELECT * FROM payments WHERE student_id = :studentId")
     suspend fun getForStudent(studentId: Long): List<PaymentEntity>
 

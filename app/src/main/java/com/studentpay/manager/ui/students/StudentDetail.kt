@@ -25,6 +25,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -52,6 +53,7 @@ import com.studentpay.manager.domain.MonthState
 import com.studentpay.manager.domain.Months
 import com.studentpay.manager.domain.Payment
 import com.studentpay.manager.domain.PaymentType
+import com.studentpay.manager.domain.ReportBasis
 import com.studentpay.manager.domain.Student
 import com.studentpay.manager.pdf.ReportService
 import com.studentpay.manager.ui.appViewModel
@@ -116,12 +118,12 @@ class StudentDetailViewModel(
 
     fun setYear(y: Int) { year.value = y }
 
-    fun createReport(onReady: (String) -> Unit) {
+    fun createReport(basis: ReportBasis, onReady: (String) -> Unit) {
         if (generating.value) return
         generating.value = true
         viewModelScope.launch {
             try {
-                onReady(reports.studentReport(studentId, year.value).name)
+                onReady(reports.studentReport(studentId, year.value, basis).name)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -244,13 +246,20 @@ fun StudentDetailScreen(studentId: Long, onBack: () -> Unit, onEdit: () -> Unit,
                 }
                 item(key = "report") {
                     Button(
-                        onClick = { vm.createReport(onPreview) },
+                        onClick = { vm.createReport(ReportBasis.COLLECTED, onPreview) },
                         enabled = !state.generating,
                         modifier = Modifier.fillMaxWidth().padding(top = 16.dp).height(56.dp),
                     ) {
                         if (state.generating) CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
                         else Text(stringResource(R.string.detail_report, state.year))
                     }
+                }
+                item(key = "report-actual") {
+                    OutlinedButton(
+                        onClick = { vm.createReport(ReportBasis.ACTUAL, onPreview) },
+                        enabled = !state.generating,
+                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp).height(56.dp),
+                    ) { Text(stringResource(R.string.detail_report_actual, state.year)) }
                 }
             }
         }

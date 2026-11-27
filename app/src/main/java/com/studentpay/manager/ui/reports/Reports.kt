@@ -40,6 +40,7 @@ import androidx.lifecycle.viewModelScope
 import com.studentpay.manager.R
 import com.studentpay.manager.data.StudentPayRepository
 import com.studentpay.manager.domain.Period
+import com.studentpay.manager.domain.ReportBasis
 import com.studentpay.manager.domain.SelectionBounds
 import com.studentpay.manager.domain.Student
 import com.studentpay.manager.pdf.ReportService
@@ -69,6 +70,8 @@ sealed interface ReportOutput {
 
 private data class Local(
     val type: ReportType = ReportType.MONTHLY,
+    /** Default: money collected (received) in the selected period. */
+    val basis: ReportBasis = ReportBasis.COLLECTED,
     val studentId: Long? = null,
     val selected: Period = todayPeriod(),
     val generating: Boolean = false,
@@ -81,6 +84,7 @@ data class ReportsUiState(
     val isLoading: Boolean = true,
     val students: List<Student> = emptyList(),
     val type: ReportType = ReportType.MONTHLY,
+    val basis: ReportBasis = ReportBasis.COLLECTED,
     val student: Student? = null,
     val selected: Period = todayPeriod(),
     val range: ClosedRange<Period> = SelectionBounds.reports(todayPeriod()),
@@ -103,6 +107,7 @@ class ReportsViewModel(
             isLoading = false,
             students = students,
             type = l.type,
+            basis = l.basis,
             student = students.firstOrNull { it.id == l.studentId } ?: students.firstOrNull(),
             selected = l.selected,
             range = range,
@@ -114,6 +119,7 @@ class ReportsViewModel(
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ReportsUiState())
 
     fun setType(t: ReportType) = local.update { it.copy(type = t) }
+    fun setBasis(b: ReportBasis) = local.update { it.copy(basis = b) }
     fun setStudent(id: Long) = local.update { it.copy(studentId = id) }
     fun setPeriod(p: Period) = local.update {
         it.copy(selected = if (p < range.start) range.start else if (p > range.endInclusive) range.endInclusive else p)
@@ -126,9 +132,9 @@ class ReportsViewModel(
         viewModelScope.launch {
             try {
                 val file = when (s.type) {
-                    ReportType.STUDENT -> reports.studentReport(s.student?.id ?: error("no student"), s.selected.year)
-                    ReportType.MONTHLY -> reports.monthlyReport(s.selected.year, s.selected.month)
-                    ReportType.YEARLY -> reports.yearlyReport(s.selected.year)
+                    ReportType.STUDENT -> reports.studentReport(s.student?.id ?: error("no student"), s.selected.year, s.basis)
+                    ReportType.MONTHLY -> reports.monthlyReport(s.selected.year, s.selected.month, s.basis)
+                    ReportType.YEARLY -> reports.yearlyReport(s.selected.year, s.basis)
                 }
                 if (save) pendingSaveName = file.name
                 local.update {
@@ -219,6 +225,21 @@ fun ReportsScreen(onOpenPreview: (String) -> Unit) {
                             ReportType.YEARLY -> R.string.report_yearly_desc
                             ReportType.STUDENT -> R.string.report_student_desc
                         },
+                    ),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+
+                SectionHeader(stringResource(R.string.reports_basis), Modifier.padding(0.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FilterChip(state.basis == ReportBasis.COLLECTED, { vm.setBasis(ReportBasis.COLLECTED) },
+                        { Text(stringResource(R.string.basis_collected)) })
+                    FilterChip(state.basis == ReportBasis.ACTUAL, { vm.setBasis(ReportBasis.ACTUAL) },
+                        { Text(stringResource(R.string.basis_actual)) })
+                }
+                Text(
+                    stringResource(
+                        if (state.basis == ReportBasis.COLLECTED) R.string.basis_collected_desc else R.string.basis_actual_desc,
                     ),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,

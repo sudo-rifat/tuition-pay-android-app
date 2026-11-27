@@ -13,6 +13,14 @@ data class StudentFormResult(
     val isValid: Boolean get() = nameError == null && feeError == null
 }
 
+/** A payment to record: who, and how much (may differ from the student's monthly fee). */
+data class PaymentEntry(val student: Student, val amount: Int)
+
+object PaymentAmount {
+    /** Whole Taka, ASCII digits only, 0..[StudentValidator.MAX_FEE]. Returns null if the text is not a valid amount. */
+    fun parse(raw: String): Int? = StudentValidator.validate("x", raw).fee
+}
+
 /**
  * Student input rules. Legacy: name was a required text input, fee a required integer >= 0
  * (parseInt(...) || 0). We additionally trim the name and cap lengths so records stay sane.

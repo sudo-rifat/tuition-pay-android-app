@@ -21,6 +21,11 @@ data class PdfReportSpec(
     val summaryLines: List<String>,
 )
 
+object ReportBasisText {
+    const val COLLECTED = "Basis: Collected (money received in the selected period)"
+    const val ACTUAL = "Basis: Actual (fees that belong to the selected period)"
+}
+
 object ReportFormat {
     private val dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy", Locale.ENGLISH)
 
@@ -48,6 +53,7 @@ object ReportSpecs {
             "Student: ${r.student.name}",
             "Current Monthly Fee: ${ReportFormat.money(r.student.monthlyFee.toLong())}",
             "Payment Type: ${ReportFormat.typeLabel(r.student.type)}",
+            ReportBasisText.ACTUAL,
         ),
         columns = listOf(
             PdfColumn("Month", 1.2f),
@@ -79,7 +85,7 @@ object ReportSpecs {
         fileStem = "report_monthly_${r.year}_${(r.month + 1).toString().padStart(2, '0')}",
         title = "Monthly Payment Report",
         subtitle = "${Months.FULL[r.month]} ${r.year}",
-        infoLines = emptyList(),
+        infoLines = listOf(ReportBasisText.ACTUAL),
         columns = listOf(
             PdfColumn("Student Name", 2.2f),
             PdfColumn("Status", 1.0f, CellAlign.CENTER),
@@ -105,11 +111,94 @@ object ReportSpecs {
         ),
     )
 
+    // ---------- COLLECTED basis ----------
+
+    fun monthlyCollected(r: MonthlyCollectedReport, zone: ZoneId): PdfReportSpec = PdfReportSpec(
+        fileStem = "report_monthly_collected_${r.year}_${(r.month + 1).toString().padStart(2, '0')}",
+        title = "Monthly Collection Report",
+        subtitle = "Collected in ${Months.FULL[r.month]} ${r.year}",
+        infoLines = listOf(ReportBasisText.COLLECTED),
+        columns = listOf(
+            PdfColumn("Student Name", 2.0f),
+            PdfColumn("For", 1.2f, CellAlign.CENTER),
+            PdfColumn("Status", 0.9f, CellAlign.CENTER),
+            PdfColumn("Payment Date", 1.3f, CellAlign.CENTER),
+            PdfColumn("Amount", 1.1f, CellAlign.END),
+        ),
+        rows = r.rows.map { row ->
+            val forText = Months.SHORT[row.forPeriod.month] + " " + row.forPeriod.year
+            if (row.isPaid) {
+                listOf(
+                    displayName(row.student), forText, "Paid",
+                    ReportFormat.date(row.paidAtMillis!!, zone),
+                    ReportFormat.money((row.amount ?: 0).toLong()),
+                )
+            } else {
+                listOf(displayName(row.student), forText, "Due", "-", "-")
+            }
+        },
+        emptyMessage = "No students",
+        summaryLines = listOf(
+            "Total Students Paid: ${r.paidCount}",
+            "Total Students Due: ${r.dueCount}",
+            "Total Collected: ${ReportFormat.money(r.collectedAmount)}",
+        ),
+    )
+
+    fun yearlyCollected(r: YearlyReport): PdfReportSpec = PdfReportSpec(
+        fileStem = "report_yearly_collected_${r.year}",
+        title = "Yearly Collection Report",
+        subtitle = "Collected in ${r.year}",
+        infoLines = listOf(ReportBasisText.COLLECTED),
+        columns = listOf(
+            PdfColumn("Month", 1.6f),
+            PdfColumn("Payments", 1.2f, CellAlign.CENTER),
+            PdfColumn("Amount Collected", 1.8f, CellAlign.END),
+        ),
+        rows = r.months.map { listOf(Months.FULL[it.month], it.paymentCount.toString(), ReportFormat.money(it.amount)) },
+        emptyMessage = "No payments",
+        summaryLines = listOf(
+            "Grand Total Collected in ${r.year}: ${ReportFormat.money(r.grandTotal)}",
+            "Total Payment Records: ${r.recordCount}",
+        ),
+    )
+
+    fun studentCollected(r: StudentCollectedReport, generatedOn: String, zone: ZoneId): PdfReportSpec = PdfReportSpec(
+        fileStem = "report_student_collected_${r.student.id}_${r.year}",
+        title = "Student Collection Report",
+        subtitle = "Collected in ${r.year}  |  Generated $generatedOn",
+        infoLines = listOf(
+            "Student: ${r.student.name}",
+            "Current Monthly Fee: ${ReportFormat.money(r.student.monthlyFee.toLong())}",
+            "Payment Type: ${ReportFormat.typeLabel(r.student.type)}",
+            ReportBasisText.COLLECTED,
+        ),
+        columns = listOf(
+            PdfColumn("Received In", 1.3f),
+            PdfColumn("For", 1.3f),
+            PdfColumn("Payment Date", 1.3f, CellAlign.CENTER),
+            PdfColumn("Amount", 1.1f, CellAlign.END),
+        ),
+        rows = r.rows.map {
+            listOf(
+                Months.FULL[it.collectedIn.month],
+                Months.SHORT[it.forPeriod.month] + " " + it.forPeriod.year,
+                ReportFormat.date(it.paidAtMillis, zone),
+                ReportFormat.money(it.amount.toLong()),
+            )
+        },
+        emptyMessage = "No payments received in ${r.year}",
+        summaryLines = listOf(
+            "Payments received: ${r.rows.size}",
+            "Total Received: ${ReportFormat.money(r.totalAmount)}",
+        ),
+    )
+
     fun yearly(r: YearlyReport): PdfReportSpec = PdfReportSpec(
         fileStem = "report_yearly_${r.year}",
         title = "Yearly Summary Report",
         subtitle = "Year ${r.year}",
-        infoLines = emptyList(),
+        infoLines = listOf(ReportBasisText.ACTUAL),
         columns = listOf(
             PdfColumn("Month", 1.6f),
             PdfColumn("Payments", 1.2f, CellAlign.CENTER),
