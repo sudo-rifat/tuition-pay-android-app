@@ -28,8 +28,13 @@ data class DashboardStats(
     val totalStudents: Int,
     val paidCount: Int,
     val dueCount: Int,
-    /** Sum of the amounts RECORDED on the paid payments (not the students' current fees). */
+    /**
+     * Sum of the amounts RECORDED on the paid payments (not the students' current fees). Includes income from
+     * students who were deleted since: that money was really received.
+     */
     val collectedAmount: Long,
+    /** The part of [collectedAmount] that came from deleted students. */
+    val fromDeletedStudents: Long = 0L,
 )
 
 data class DashboardResult(val rows: List<StudentMonthStatus>, val stats: DashboardStats)
@@ -47,6 +52,7 @@ object Dashboard {
         payments: Collection<Payment>,
         collectionMonth: Int,
         collectionYear: Int,
+        deletedStudents: List<Student> = emptyList(),
     ): DashboardResult {
         val index = PaidIndex(payments)
         var paid = 0
@@ -60,6 +66,14 @@ object Dashboard {
             }
             StudentMonthStatus(s, target, payment != null, payment?.amount ?: s.monthlyFee)
         }
+        // Deleted students are not listed or counted, but what they paid still counts as income.
+        var fromDeleted = 0L
+        for (s in deletedStudents) {
+            val target = PaymentRules.targetPeriod(s.type, collectionMonth, collectionYear)
+            val payment = index.paymentFor(s.id, target) ?: continue
+            collected += payment.amount
+            fromDeleted += payment.amount
+        }
         return DashboardResult(
             rows = rows,
             stats = DashboardStats(
@@ -67,6 +81,7 @@ object Dashboard {
                 paidCount = paid,
                 dueCount = students.size - paid,
                 collectedAmount = collected,
+                fromDeletedStudents = fromDeleted,
             ),
         )
     }

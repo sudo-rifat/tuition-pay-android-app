@@ -11,7 +11,14 @@ class BackupFormatException(val error: BackupFormatError) : Exception(error.name
  * month_paid_for, paid_on_month, date), so a file exported from the old PWA and a file exported
  * from this app share one format and one importer.
  */
-data class RawStudent(val id: Long?, val name: String?, val paymentType: String?, val monthlyFee: Long?)
+data class RawStudent(
+    val id: Long?,
+    val name: String?,
+    val paymentType: String?,
+    val monthlyFee: Long?,
+    /** Epoch millis when the student was deleted; null/absent = active (always absent in legacy files). */
+    val deletedAtMillis: Long? = null,
+)
 
 data class RawPayment(
     val studentId: Long?,
@@ -93,7 +100,7 @@ object BackupValidator {
                 note("Skipped: $problem")
             } else {
                 if (fee == null) feesDefaulted++
-                students[id!!] = Student(id, name, type!!, (fee ?: 0L).toInt())
+                students[id!!] = Student(id, name, type!!, (fee ?: 0L).toInt(), r.deletedAtMillis?.takeIf { it > 0L })
             }
         }
 

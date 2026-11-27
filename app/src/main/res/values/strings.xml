@@ -77,7 +77,8 @@
     <string name="students_add">Add student</string>
     <string name="students_row_support">%1$s · %2$s</string>
     <string name="delete_title">Delete %1$s?</string>
-    <string name="delete_body">This also deletes %1$d payment records for this student. This can’t be undone.</string>
+    <string name="delete_body">%1$s already received from this student (%2$d payments) stays in your income, reports and backups. The student is only removed from your lists. You can bring them back from Settings > Deleted students.</string>
+    <string name="delete_body_none">This student has no payments, so your income is not affected. You can bring them back from Settings > Deleted students.</string>
     <string name="student_details">Student</string>
     <string name="student_not_found">Student not found</string>
     <string name="student_not_found_body">This student may have been deleted.</string>
@@ -162,7 +163,7 @@
     <string name="help_lang_bn">বাংলা</string>
     <string name="help_lang_en">English</string>
     <string name="help_en_1_title">1. Add students</string>
-    <string name="help_en_1_body">Open Students and tap Add student. Enter the name, the monthly fee and the payment type, then Save. Use the ⋮ menu on a student to edit or delete. Deleting a student also deletes that student’s payment records. Changing a student’s fee only affects payments recorded afterwards; past payments keep their recorded amount.</string>
+    <string name="help_en_1_body">Open Students and tap Add student. Enter the name, the monthly fee and the payment type, then Save. Use the ⋮ menu on a student to edit or delete. Deleting a student hides them from your lists but keeps the payments they made, so your income and reports do not change. You can bring a deleted student back in Settings > Deleted students. Changing a student’s fee only affects payments recorded afterwards; past payments keep their recorded amount.</string>
     <string name="help_en_2_title">2. Payment types</string>
     <string name="help_en_2_body">Type A (Current month): money collected in a month is for that same month. Type B (Previous month): money collected in a month is always recorded for the month right before it. Collected in March 2026 it is for February 2026, collected in January 2026 it is for December 2025, and collected in December 2026 it is for November 2026.</string>
     <string name="help_en_3_title">3. Record payments</string>
@@ -176,7 +177,7 @@
     <string name="help_en_7_title">7. Backup, restore and old data</string>
     <string name="help_en_7_body">Settings &gt; Export backup saves a JSON file; keep it somewhere safe. Restore backup replaces all current data with the file (you are asked to confirm first). To move data from the old web app, export it there and restore that file here.</string>
     <string name="help_bn_1_title">১. শিক্ষার্থী যোগ করা</string>
-    <string name="help_bn_1_body">Students ট্যাবে Add student চাপুন। নাম, মাসিক ফি ও পেমেন্ট টাইপ দিয়ে Save করুন। শিক্ষার্থীর পাশের ⋮ মেনু থেকে Edit বা Delete করা যায়। Delete করলে ওই শিক্ষার্থীর সব পেমেন্ট রেকর্ডও মুছে যায়। ফি বদলালে শুধু পরের পেমেন্টে নতুন ফি ধরা হয়; আগের পেমেন্টের টাকার অঙ্ক অপরিবর্তিত থাকে।</string>
+    <string name="help_bn_1_body">Students ট্যাবে Add student চাপুন। নাম, মাসিক ফি ও পেমেন্ট টাইপ দিয়ে Save করুন। শিক্ষার্থীর পাশের ⋮ মেনু থেকে Edit বা Delete করা যায়। Delete করলে শিক্ষার্থী তালিকা থেকে সরে যায়, কিন্তু তার দেওয়া পেমেন্ট আপনার আয় ও রিপোর্টে থেকে যায়। Settings > Deleted students থেকে আবার ফিরিয়ে আনা যায়। ফি বদলালে শুধু পরের পেমেন্টে নতুন ফি ধরা হয়; আগের পেমেন্টের টাকার অঙ্ক অপরিবর্তিত থাকে।</string>
     <string name="help_bn_2_title">২. পেমেন্ট টাইপ</string>
     <string name="help_bn_2_body">Type A (Current Month): যে মাসে টাকা নিচ্ছেন সেই মাসের ফি হিসেবেই জমা হয়। Type B (Previous Month): যে মাসে টাকা নিচ্ছেন তা সবসময় তার ঠিক আগের মাসের ফি হিসেবে জমা হয়। যেমন ২০২৬ সালের মার্চে নিলে ফেব্রুয়ারির ফি, জানুয়ারিতে নিলে আগের বছরের (২০২৫) ডিসেম্বরের ফি, আর ডিসেম্বরে নিলে নভেম্বরের ফি।</string>
     <string name="help_bn_3_title">৩. পেমেন্ট নেওয়া</string>
@@ -191,4 +192,13 @@
     <string name="help_bn_7_body">Settings &gt; Export backup দিয়ে একটি JSON ফাইল সেভ করুন এবং নিরাপদ জায়গায় রাখুন। Restore backup দিলে বর্তমান সব ডেটা ফাইলের ডেটা দিয়ে বদলে যায় (আগে নিশ্চিত করতে বলা হয়)। পুরোনো ওয়েব অ্যাপের ডেটা আনতে সেখান থেকে export করে ওই ফাইলটি এখানে Restore করুন।</string>
     <string name="form_fee_note">Changing the fee only affects payments recorded from now on. Past payments keep the amount they were recorded with.</string>
     <string name="restore_p_amounts">%1$d payments had no recorded amount and use the student’s fee from the file.</string>
+    <string name="settings_deleted">Deleted students</string>
+    <string name="settings_deleted_desc">Their income is kept. You can restore them</string>
+    <string name="deleted_info">Money received from these students stays in your income, reports and backups.</string>
+    <string name="deleted_empty_title">No deleted students</string>
+    <string name="deleted_empty_body">When you delete a student, they appear here with the income you received from them.</string>
+    <string name="deleted_row_support">Deleted %1$s · %2$s received (%3$d payments)</string>
+    <string name="deleted_restore">Restore</string>
+    <string name="deleted_restored">%1$s restored</string>
+    <string name="home_includes_deleted">Includes %1$s from deleted students</string>
 </resources>

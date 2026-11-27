@@ -52,7 +52,14 @@ data class Student(
     val type: PaymentType,
     /** Whole Taka (the legacy app used parseInt). */
     val monthlyFee: Int,
-)
+    /**
+     * When the student was deleted (UTC epoch millis), or null while active. "Deleting" a student only hides
+     * them: their payments are kept, so the income already received is never lost. See StudentPayRepository.
+     */
+    val deletedAtMillis: Long? = null,
+) {
+    val isDeleted: Boolean get() = deletedAtMillis != null
+}
 
 /**
  * One paid month for one student.
@@ -73,6 +80,9 @@ data class Payment(
 ) {
     val period: Period get() = Period(year, monthPaidFor)
 }
+
+/** A deleted student with what they paid in total (shown on the "Deleted students" screen). */
+data class DeletedStudentSummary(val student: Student, val totalReceived: Long, val paymentCount: Int)
 
 object Months {
     val SHORT: List<String> =

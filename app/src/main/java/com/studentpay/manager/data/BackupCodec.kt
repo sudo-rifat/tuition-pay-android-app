@@ -19,7 +19,7 @@ import org.json.JSONTokener
  *
  * {
  *   "app": "StudentPayManager", "formatVersion": 1, "exportedAt": "2026-11-25T10:00:00Z",
- *   "students": [ { "id", "name", "payment_type", "monthly_fee" } ],
+ *   "students": [ { "id", "name", "payment_type", "monthly_fee", "deleted_at" } ],
  *   "payments": [ { "id", "student_id", "year", "month_paid_for", "paid_on_month", "date", "amount" } ]
  * }
  *
@@ -42,7 +42,8 @@ object BackupCodec {
                     .put("id", s.id)
                     .put("name", s.name)
                     .put("payment_type", s.type.code)
-                    .put("monthly_fee", s.monthlyFee),
+                    .put("monthly_fee", s.monthlyFee)
+                    .put("deleted_at", s.deletedAtMillis?.let { Instant.ofEpochMilli(it).toString() } ?: JSONObject.NULL),
             )
         }
         val paymentArray = JSONArray()
@@ -102,6 +103,7 @@ object BackupCodec {
                 name = o?.opt("name") as? String,
                 paymentType = o?.opt("payment_type") as? String,
                 monthlyFee = o?.optNumber("monthly_fee"),
+                deletedAtMillis = o?.optDateMillis("deleted_at"),
             )
         }
         val payments = (0 until paymentArray.length()).map { i ->

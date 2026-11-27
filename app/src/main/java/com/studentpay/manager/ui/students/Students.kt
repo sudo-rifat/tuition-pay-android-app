@@ -56,7 +56,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-data class DeletePrompt(val student: Student, val paymentCount: Int)
+data class DeletePrompt(val student: Student, val paymentCount: Int, val totalReceived: Long)
 
 data class StudentsUiState(
     val isLoading: Boolean = true,
@@ -76,7 +76,11 @@ class StudentsViewModel(private val repository: StudentPayRepository) : ViewMode
 
     fun requestDelete(student: Student) {
         viewModelScope.launch {
-            prompt.value = DeletePrompt(student, repository.paymentCountFor(student.id))
+            prompt.value = DeletePrompt(
+                student,
+                repository.paymentCountFor(student.id),
+                repository.paymentTotalFor(student.id),
+            )
         }
     }
 
@@ -143,7 +147,7 @@ fun StudentsScreen(onOpenStudent: (Long) -> Unit, onAddStudent: () -> Unit, onEd
     state.deletePrompt?.let { p ->
         ConfirmDialog(
             title = stringResource(R.string.delete_title, p.student.name),
-            text = stringResource(R.string.delete_body, p.paymentCount),
+            text = deleteBodyText(p),
             confirmLabel = stringResource(R.string.action_delete),
             destructive = true,
             onConfirm = vm::confirmDelete,
@@ -151,6 +155,12 @@ fun StudentsScreen(onOpenStudent: (Long) -> Unit, onAddStudent: () -> Unit, onEd
         )
     }
 }
+
+/** Explains what "Delete" really does: the student is hidden, the money already received is kept. */
+@Composable
+fun deleteBodyText(p: DeletePrompt): String =
+    if (p.paymentCount == 0) stringResource(R.string.delete_body_none)
+    else stringResource(R.string.delete_body, formatTaka(p.totalReceived), p.paymentCount)
 
 @Composable
 private fun StudentRow(

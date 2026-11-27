@@ -39,6 +39,7 @@ import com.studentpay.manager.ui.payments.PaymentsScreen
 import com.studentpay.manager.ui.reports.PdfPreviewScreen
 import com.studentpay.manager.ui.reports.ReportsScreen
 import com.studentpay.manager.ui.settings.ChangePinScreen
+import com.studentpay.manager.ui.settings.DeletedStudentsScreen
 import com.studentpay.manager.ui.settings.HelpScreen
 import com.studentpay.manager.ui.settings.SettingsScreen
 import com.studentpay.manager.ui.students.StudentDetailScreen
@@ -59,6 +60,7 @@ object Routes {
     const val PREVIEW = "report_preview/{$ARG_FILE}"
     const val CHANGE_PIN = "change_pin"
     const val HELP = "help"
+    const val DELETED = "deleted_students"
 
     fun studentDetail(id: Long) = "student/$id"
     /** id 0 = new student. */
@@ -142,6 +144,7 @@ private fun MainScaffold(vm: AppViewModel) {
                     appVm = vm,
                     onChangePin = { nav.navigate(Routes.CHANGE_PIN) },
                     onHelp = { nav.navigate(Routes.HELP) },
+                    onDeletedStudents = { nav.navigate(Routes.DELETED) },
                 )
             }
             composable(
@@ -176,6 +179,7 @@ private fun MainScaffold(vm: AppViewModel) {
             }
             composable(Routes.CHANGE_PIN) { ChangePinScreen(vm, onBack = { nav.popBackStack() }) }
             composable(Routes.HELP) { HelpScreen(onBack = { nav.popBackStack() }) }
+            composable(Routes.DELETED) { DeletedStudentsScreen(onBack = { nav.popBackStack() }) }
         }
     }
 }

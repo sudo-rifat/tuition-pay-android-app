@@ -81,7 +81,7 @@ data class DetailUiState(
     /** Paid months of [year], in month order. */
     val history: List<Payment> = emptyList(),
     val generating: Boolean = false,
-    val deleteCount: Int? = null,
+    val deletePrompt: DeletePrompt? = null,
     val error: Boolean = false,
 )
 
@@ -93,14 +93,14 @@ class StudentDetailViewModel(
     private val today = todayPeriod()
     private val year = MutableStateFlow(today.year)
     private val generating = MutableStateFlow(false)
-    private val deleteCount = MutableStateFlow<Int?>(null)
+    private val deletePrompt = MutableStateFlow<DeletePrompt?>(null)
     private val error = MutableStateFlow(false)
 
     val uiState: StateFlow<DetailUiState> = combine(
         repository.observeStudent(studentId),
         repository.observeStudentPayments(studentId),
         year,
-        combine(generating, deleteCount, error) { g, d, e -> Triple(g, d, e) },
+        combine(generating, deletePrompt, error) { g, d, e -> Triple(g, d, e) },
     ) { student, payments, y, flags ->
         DetailUiState(
             isLoading = false,
@@ -109,7 +109,7 @@ class StudentDetailViewModel(
             states = if (student == null) emptyList() else Dashboard.monthStates(student.id, y, payments, today),
             history = payments.filter { it.year == y }.sortedBy { it.monthPaidFor },
             generating = flags.first,
-            deleteCount = flags.second,
+            deletePrompt = flags.second,
             error = flags.third,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DetailUiState())
@@ -133,13 +133,20 @@ class StudentDetailViewModel(
     }
 
     fun requestDelete() {
-        viewModelScope.launch { deleteCount.value = repository.paymentCountFor(studentId) }
+        val student = uiState.value.student ?: return
+        viewModelScope.launch {
+            deletePrompt.value = DeletePrompt(
+                student,
+                repository.paymentCountFor(studentId),
+                repository.paymentTotalFor(studentId),
+            )
+        }
     }
 
-    fun cancelDelete() { deleteCount.value = null }
+    fun cancelDelete() { deletePrompt.value = null }
 
     fun confirmDelete(onDone: () -> Unit) {
-        deleteCount.value = null
+        deletePrompt.value = null
         viewModelScope.launch {
             try {
                 repository.deleteStudent(studentId)
@@ -249,10 +256,10 @@ fun StudentDetailScreen(studentId: Long, onBack: () -> Unit, onEdit: () -> Unit,
         }
     }
 
-    state.deleteCount?.let { count ->
+    state.deletePrompt?.let { prompt ->
         ConfirmDialog(
-            title = stringResource(R.string.delete_title, student?.name.orEmpty()),
-            text = stringResource(R.string.delete_body, count),
+            title = stringResource(R.string.delete_title, prompt.student.name),
+            text = deleteBodyText(prompt),
             confirmLabel = stringResource(R.string.action_delete),
             destructive = true,
             onConfirm = { vm.confirmDelete(onBack) },

@@ -108,6 +108,14 @@ class BackupValidatorTest {
         assertEquals(0, q.summary.amountsDefaulted)
     }
 
+    @Test fun deletedAtIsKeptWhenValidAndIgnoredWhenNot() {
+        val p = BackupValidator.validate(
+            listOf(RawStudent(1, "A", "A", 5, 123L), RawStudent(2, "B", "A", 5, 0L), RawStudent(3, "C", "A", 5, null)),
+            emptyList(), now,
+        )
+        assertEquals(listOf<Long?>(123L, null, null), p.students.map { it.deletedAtMillis })
+    }
+
     @Test fun notesAreCapped() {
         val bad = (1..50).map { st(null) }
         val p = BackupValidator.validate(bad, emptyList(), now)

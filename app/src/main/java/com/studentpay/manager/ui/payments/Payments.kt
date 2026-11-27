@@ -91,8 +91,9 @@ class PaymentsViewModel(private val repository: StudentPayRepository) : ViewMode
             repository.observeStudents(),
             repository.observePayments(sel.year - 1, sel.year),
             filter,
-        ) { students, payments, f ->
-            val result = Dashboard.compute(students, payments, sel.month, sel.year)
+            repository.observeDeletedStudents(),
+        ) { students, payments, f, deleted ->
+            val result = Dashboard.compute(students, payments, sel.month, sel.year, deleted)
             PaymentsUiState(
                 isLoading = false,
                 selected = sel,

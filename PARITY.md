@@ -6,7 +6,7 @@ compiled and run (see README). "Device QA" = needs a manual check on a phone.
 | # | Old behaviour (where) | New implementation | Status |
 |---|---|---|---|
 | 1 | Students: name, `payment_type` A/B, `monthly_fee` (db.js `students`, autoIncrement id) | `StudentEntity`, same field meaning; ids preserved on import | Verified |
-| 2 | Add / edit / delete student; delete also removes payments (`deleteStudent`) | Form screen, ⋮ menu, `ON DELETE CASCADE`; confirm dialog states how many payments go | Device QA |
+| 2 | Add / edit / delete student; delete also removed payments (`deleteStudent`) | Form screen, ⋮ menu; **delete now hides the student and keeps all payments/income** (DB v3 `deleted_at`); dialog states what was received; restore from Settings → Deleted students | Device QA |
 | 3 | Type A "Current Month": pay month = selected month (`getTargetMonthIndex`) | `PaymentRules.targetMonth/Year` | Verified |
 | 4 | Type B (old label "Next Month", now **"Previous Month"**): pay month = the immediately preceding month; collected Jan → previous Dec (`getTargetMonthIndex/Year`) | same function, logic unchanged; label corrected everywhere | Verified |
 | 5 | Unique payment per student+year+month (`student_year_month` index) | UNIQUE index; `markPaid` upserts like `addPayment` | Verified (logic) / Device QA |
@@ -26,6 +26,7 @@ compiled and run (see README). "Device QA" = needs a manual check on a phone.
 | 19 | Offline PWA (service worker) | Native; **no INTERNET permission** | Verified (manifest) |
 | 20 | Legacy data migration `runMigration` (missing `date` → now) | Importer gives missing dates the import time; reports it | Verified |
 | 21 | *(new)* Fee on each payment; fee edits never change past totals | `payments.amount`, DB v2 + migration, backup field `amount` | Verified (logic, SQL) |
+| 22 | *(new)* Deleted students keep their income: counted on Home/Payments, in Monthly/Yearly reports and backups; restorable | `students.deleted_at`, DB v3 + migration, backup field `deleted_at`, Deleted students screen | Verified (logic, SQL) / Device QA |
 
 ## Intentional differences (all flagged in the README)
 - Reversing a payment can be undone (new).

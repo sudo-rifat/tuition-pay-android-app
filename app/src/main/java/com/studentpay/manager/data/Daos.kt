@@ -9,17 +9,30 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface StudentDao {
-    @Query("SELECT * FROM students ORDER BY id")
-    fun observeAll(): Flow<List<StudentEntity>>
+    /** Students shown in lists (not deleted). */
+    @Query("SELECT * FROM students WHERE deleted_at IS NULL ORDER BY id")
+    fun observeActive(): Flow<List<StudentEntity>>
 
-    @Query("SELECT * FROM students WHERE id = :id")
-    fun observe(id: Long): Flow<StudentEntity?>
+    /** Deleted students, most recently deleted first. Their payments are still in the database. */
+    @Query("SELECT * FROM students WHERE deleted_at IS NOT NULL ORDER BY deleted_at DESC, id")
+    fun observeDeleted(): Flow<List<StudentEntity>>
 
+    @Query("SELECT * FROM students WHERE id = :id AND deleted_at IS NULL")
+    fun observeActiveById(id: Long): Flow<StudentEntity?>
+
+    /** Any student, deleted or not. */
     @Query("SELECT * FROM students WHERE id = :id")
     suspend fun get(id: Long): StudentEntity?
 
+    /** Every student including deleted ones (reports and backups need them). */
     @Query("SELECT * FROM students ORDER BY id")
     suspend fun getAll(): List<StudentEntity>
+
+    @Query("UPDATE students SET deleted_at = :at WHERE id = :id AND deleted_at IS NULL")
+    suspend fun markDeleted(id: Long, at: Long): Int
+
+    @Query("UPDATE students SET deleted_at = NULL WHERE id = :id")
+    suspend fun markRestored(id: Long): Int
 
     @Insert
     suspend fun insert(student: StudentEntity): Long
@@ -30,12 +43,12 @@ interface StudentDao {
     @Update
     suspend fun update(student: StudentEntity): Int
 
-    @Query("DELETE FROM students WHERE id = :id")
-    suspend fun delete(id: Long): Int
-
     @Query("DELETE FROM students")
     suspend fun deleteAll()
 }
+
+/** Query result: one student's payments summed. Column names match the aliases in [PaymentDao]. */
+data class StudentTotalRow(val studentId: Long, val total: Long, val count: Int)
 
 @Dao
 interface PaymentDao {
@@ -60,6 +73,16 @@ interface PaymentDao {
 
     @Query("SELECT COUNT(*) FROM payments WHERE student_id = :studentId")
     suspend fun countForStudent(studentId: Long): Int
+
+    @Query("SELECT COALESCE(SUM(amount), 0) FROM payments WHERE student_id = :studentId")
+    suspend fun totalForStudent(studentId: Long): Long
+
+    /** What each deleted student paid in total. */
+    @Query(
+        "SELECT student_id AS studentId, COALESCE(SUM(amount), 0) AS total, COUNT(*) AS count FROM payments " +
+            "WHERE student_id IN (SELECT id FROM students WHERE deleted_at IS NOT NULL) GROUP BY student_id",
+    )
+    fun observeDeletedTotals(): Flow<List<StudentTotalRow>>
 
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insert(payment: PaymentEntity): Long

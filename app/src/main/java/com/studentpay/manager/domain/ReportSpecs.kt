@@ -38,6 +38,8 @@ object ReportFormat {
 
 object ReportSpecs {
 
+    private fun displayName(s: Student): String = if (s.isDeleted) s.name + " (deleted)" else s.name
+
     fun student(r: StudentReport, generatedOn: String, zone: ZoneId): PdfReportSpec = PdfReportSpec(
         fileStem = "report_student_${r.student.id}_${r.year}",
         title = "Student Payment Report",
@@ -87,12 +89,12 @@ object ReportSpecs {
         rows = r.rows.map { row ->
             if (row.isPaid) {
                 listOf(
-                    row.student.name, "Paid",
+                    displayName(row.student), "Paid",
                     ReportFormat.date(row.paidAtMillis!!, zone),
                     ReportFormat.money((row.amount ?: 0).toLong()),
                 )
             } else {
-                listOf(row.student.name, "Due", "-", "-")
+                listOf(displayName(row.student), "Due", "-", "-")
             }
         },
         emptyMessage = "No students",

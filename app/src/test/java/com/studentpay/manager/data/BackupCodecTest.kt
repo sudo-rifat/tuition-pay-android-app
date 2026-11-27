@@ -61,6 +61,22 @@ class BackupCodecTest {
         assertTrue(json.contains("\"formatVersion\""))
     }
 
+    @Test fun deletedStudentsKeepTheirDeletionAndPaymentsThroughBackup() {
+        val students = listOf(Student(5, "Rafi", PaymentType.A, 500), Student(8, "Mina", PaymentType.B, 700, deletedAtMillis = 1_772_668_800_000L))
+        val payments = listOf(Payment(1, 8, 2026, 1, 2, 1_772_668_800_123L, 650))
+        val (rs, rp) = BackupCodec.decode(BackupCodec.encode(students, payments, 1L))
+        val plan = BackupValidator.validate(rs, rp, 1L)
+        assertNull(plan.students[0].deletedAtMillis)
+        assertEquals(1_772_668_800_000L, plan.students[1].deletedAtMillis)
+        assertEquals(650, plan.payments[0].amount)              // the deleted student's income survives the round trip
+        assertFalse(plan.summary.hasProblems)
+    }
+
+    @Test fun legacyFilesHaveNoDeletedStudents() {
+        val (rs, _) = BackupCodec.decode(legacy)
+        assertTrue(rs.all { it.deletedAtMillis == null })
+    }
+
     @Test fun toleratesNumbersAsStringsAndNumericDates() {
         val json = "{\"students\":[{\"id\":\"4\",\"name\":\"A\",\"payment_type\":\"A\",\"monthly_fee\":\"250\"}]," +
             "\"payments\":[{\"student_id\":4,\"year\":2026.0,\"month_paid_for\":\"0\",\"date\":1772668800000}]}"

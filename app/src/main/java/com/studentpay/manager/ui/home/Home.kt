@@ -76,8 +76,9 @@ class HomeViewModel(repository: StudentPayRepository) : ViewModel() {
             repository.observeStudents(),
             repository.observePayments(sel.year - 1, sel.year),
             filter,
-        ) { students, payments, f ->
-            val result = Dashboard.compute(students, payments, sel.month, sel.year)
+            repository.observeDeletedStudents(),
+        ) { students, payments, f, deleted ->
+            val result = Dashboard.compute(students, payments, sel.month, sel.year, deleted)
             HomeUiState(
                 isLoading = false,
                 selected = sel,
@@ -186,6 +187,12 @@ private fun HeroCard(selected: Period, stats: DashboardStats, modifier: Modifier
                 style = MaterialTheme.typography.displaySmall,
                 fontWeight = FontWeight.Bold,
             )
+            if (stats.fromDeletedStudents > 0) {
+                Text(
+                    stringResource(R.string.home_includes_deleted, formatTaka(stats.fromDeletedStudents)),
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
             Row(
                 Modifier.fillMaxWidth().padding(top = 12.dp),
                 horizontalArrangement = Arrangement.spacedBy(24.dp),

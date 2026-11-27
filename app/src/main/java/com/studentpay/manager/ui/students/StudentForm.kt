@@ -73,7 +73,7 @@ class StudentFormViewModel(private val repository: StudentPayRepository, private
     init {
         viewModelScope.launch {
             _load.value = if (studentId == 0L) FormLoad.Ready(null)
-            else repository.getStudent(studentId)?.let { FormLoad.Ready(it) } ?: FormLoad.NotFound
+            else repository.getStudent(studentId)?.takeIf { !it.isDeleted }?.let { FormLoad.Ready(it) } ?: FormLoad.NotFound
         }
     }
 

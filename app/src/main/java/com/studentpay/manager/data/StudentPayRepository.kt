@@ -1,6 +1,7 @@
 package com.studentpay.manager.data
 
 import androidx.room.withTransaction
+import com.studentpay.manager.domain.DeletedStudentSummary
 import com.studentpay.manager.domain.ImportPlan
 import com.studentpay.manager.domain.Payment
 import com.studentpay.manager.domain.PaymentRules
@@ -9,6 +10,7 @@ import com.studentpay.manager.domain.Student
 import com.studentpay.manager.domain.StudentValidator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 
@@ -25,10 +27,23 @@ class StudentPayRepository(
 
     // ---------- reads ----------
 
+    /** Active students only (the ones shown in lists and on the Payments screen). */
     fun observeStudents(): Flow<List<Student>> =
-        students.observeAll().map { list -> list.map { it.toDomain() } }
+        students.observeActive().map { list -> list.map { it.toDomain() } }
 
-    fun observeStudent(id: Long): Flow<Student?> = students.observe(id).map { it?.toDomain() }
+    /** Deleted students: not listed anywhere, but their payments still count as income. */
+    fun observeDeletedStudents(): Flow<List<Student>> =
+        students.observeDeleted().map { list -> list.map { it.toDomain() } }
+
+    /** Deleted students with how much each paid in total, for the "Deleted students" screen. */
+    fun observeDeletedSummaries(): Flow<List<DeletedStudentSummary>> =
+        combine(students.observeDeleted(), payments.observeDeletedTotals()) { list, totals ->
+            val byId = totals.associateBy { it.studentId }
+            list.map { e -> DeletedStudentSummary(e.toDomain(), byId[e.id]?.total ?: 0L, byId[e.id]?.count ?: 0) }
+        }
+
+    /** An active student; emits null if the student does not exist or was deleted. */
+    fun observeStudent(id: Long): Flow<Student?> = students.observeActiveById(id).map { it?.toDomain() }
 
     fun observePayments(fromYear: Int, toYear: Int): Flow<List<Payment>> =
         payments.observeYears(fromYear, toYear).map { list -> list.map { it.toDomain() } }
@@ -37,10 +52,13 @@ class StudentPayRepository(
         payments.observeForStudent(studentId).map { list -> list.map { it.toDomain() } }
 
     suspend fun getStudent(id: Long): Student? = students.get(id)?.toDomain()
+    /** EVERY student including deleted ones: reports and backups must not lose them. */
     suspend fun allStudents(): List<Student> = students.getAll().map { it.toDomain() }
+    suspend fun activeStudentCount(): Int = students.getAll().count { it.deletedAt == null }
     suspend fun allPayments(): List<Payment> = payments.getAll().map { it.toDomain() }
     suspend fun paymentsForYear(year: Int): List<Payment> = payments.getForYear(year).map { it.toDomain() }
     suspend fun paymentCountFor(studentId: Long): Int = payments.countForStudent(studentId)
+    suspend fun paymentTotalFor(studentId: Long): Long = payments.totalForStudent(studentId)
 
     // ---------- students ----------
 
@@ -51,13 +69,21 @@ class StudentPayRepository(
 
     suspend fun updateStudent(id: Long, name: String, type: PaymentType, fee: Int) {
         requireValid(name, fee)
-        val updated = students.update(StudentEntity(id, name.trim(), type.code, fee))
-        require(updated == 1) { "Student $id not found" }
+        val existing = students.get(id)
+        require(existing != null && existing.deletedAt == null) { "Student $id not found" }
+        students.update(existing.copy(name = name.trim(), paymentType = type.code, monthlyFee = fee))
     }
 
-    /** Deletes the student and (via ON DELETE CASCADE) all of their payments, like the legacy app. */
+    /**
+     * "Deletes" a student: hides them from every list but KEEPS all their payments, so the income already received
+     * stays in the dashboard, reports and backups. Reversible with [restoreStudent].
+     */
     suspend fun deleteStudent(id: Long) {
-        students.delete(id)
+        students.markDeleted(id, clock())
+    }
+
+    suspend fun restoreStudent(id: Long) {
+        students.markRestored(id)
     }
 
     // ---------- payments ----------

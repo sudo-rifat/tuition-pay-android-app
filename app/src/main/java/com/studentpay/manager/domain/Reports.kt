@@ -57,7 +57,9 @@ object Reports {
         val forMonth = payments.filter { it.year == year && it.monthPaidFor == month }
             .associateBy { it.studentId }
         var collected = 0L
-        val rows = students.map { s ->
+        // Deleted students only appear when they actually paid in this month (so the income is accounted for);
+        // they are never listed as "due".
+        val rows = students.filter { !it.isDeleted || forMonth.containsKey(it.id) }.map { s ->
             val p = forMonth[s.id]
             if (p != null) collected += p.amount
             MonthlyReportRow(s, p?.paidAtMillis, p?.amount)

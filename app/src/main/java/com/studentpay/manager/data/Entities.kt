@@ -17,12 +17,15 @@ data class StudentEntity(
     /** Stable code "A" or "B" (never an enum ordinal). */
     @ColumnInfo(name = "payment_type") val paymentType: String,
     @ColumnInfo(name = "monthly_fee", defaultValue = "0") val monthlyFee: Int,
+    /** DB version 3. UTC epoch millis when the student was deleted; null = active. Deleting never removes payments. */
+    @ColumnInfo(name = "deleted_at") val deletedAt: Long? = null,
 )
 
 /**
  * Legacy IndexedDB store `payments`. The legacy unique compound index
  * [student_id, year, month_paid_for] is preserved as a UNIQUE index, so duplicate payments are
- * impossible at the database level. Deleting a student cascades to the payments (legacy deleteStudent).
+ * impossible at the database level. The foreign key still cascades, but the app never hard-deletes a student any
+ * more: "delete" sets `students.deleted_at`, so payments (and the income they represent) are kept.
  */
 @Entity(
     tableName = "payments",
@@ -53,12 +56,12 @@ data class PaymentEntity(
 )
 
 internal fun StudentEntity.toDomain(): Student =
-    Student(id, name, PaymentType.fromCode(paymentType) ?: PaymentType.A, monthlyFee)
+    Student(id, name, PaymentType.fromCode(paymentType) ?: PaymentType.A, monthlyFee, deletedAt)
 
 internal fun PaymentEntity.toDomain(): Payment =
     Payment(id, studentId, year, monthPaidFor, paidOnMonth, paidAt, amount)
 
-internal fun Student.toEntity(): StudentEntity = StudentEntity(id, name, type.code, monthlyFee)
+internal fun Student.toEntity(): StudentEntity = StudentEntity(id, name, type.code, monthlyFee, deletedAtMillis)
 
 internal fun Payment.toEntity(): PaymentEntity =
     PaymentEntity(id, studentId, year, monthPaidFor, paidOnMonth, paidAtMillis, amount)

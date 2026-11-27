@@ -116,7 +116,7 @@ class SettingsViewModel(
         viewModelScope.launch {
             try {
                 val plan = backup.readPlan(uri)
-                restore.value = RestoreState.Confirm(plan, repository.allStudents().size, repository.allPayments().size)
+                restore.value = RestoreState.Confirm(plan, repository.activeStudentCount(), repository.allPayments().size)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: BackupFormatException) {
@@ -153,7 +153,7 @@ class SettingsViewModel(
 }
 
 @Composable
-fun SettingsScreen(appVm: AppViewModel, onChangePin: () -> Unit, onHelp: () -> Unit) {
+fun SettingsScreen(appVm: AppViewModel, onChangePin: () -> Unit, onHelp: () -> Unit, onDeletedStudents: () -> Unit) {
     val vm = appViewModel { SettingsViewModel(it.settings, it.backup, it.repository) }
     val state by vm.uiState.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
@@ -196,9 +196,11 @@ fun SettingsScreen(appVm: AppViewModel, onChangePin: () -> Unit, onHelp: () -> U
 
             SectionHeader(stringResource(R.string.settings_data), Modifier.padding(top = 8.dp))
             Group {
-                Row2(0, 2, stringResource(R.string.settings_export), stringResource(R.string.settings_export_desc),
+                Row2(0, 3, stringResource(R.string.settings_deleted), stringResource(R.string.settings_deleted_desc),
+                    onClick = onDeletedStudents)
+                Row2(1, 3, stringResource(R.string.settings_export), stringResource(R.string.settings_export_desc),
                     onClick = { exportLauncher.launch("student-pay-backup-${LocalDate.now()}.json") })
-                Row2(1, 2, stringResource(R.string.settings_restore), stringResource(R.string.settings_restore_desc),
+                Row2(2, 3, stringResource(R.string.settings_restore), stringResource(R.string.settings_restore_desc),
                     onClick = { importLauncher.launch(arrayOf("*/*")) })
             }
 
