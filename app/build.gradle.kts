@@ -20,8 +20,18 @@ android {
         versionName = "1.0.0"
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile = file(providers.gradleProperty("STUDENTPAY_STORE_FILE").get())
+            storePassword = providers.gradleProperty("STUDENTPAY_STORE_PASSWORD").get()
+            keyAlias = providers.gradleProperty("STUDENTPAY_KEY_ALIAS").get()
+            keyPassword = providers.gradleProperty("STUDENTPAY_KEY_PASSWORD").get()
+        }
+    }
+
     buildTypes {
         release {
+            signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
