@@ -20,11 +20,12 @@ import org.json.JSONTokener
  * {
  *   "app": "StudentPayManager", "formatVersion": 1, "exportedAt": "2026-11-25T10:00:00Z",
  *   "students": [ { "id", "name", "payment_type", "monthly_fee" } ],
- *   "payments": [ { "id", "student_id", "year", "month_paid_for", "paid_on_month", "date" } ]
+ *   "payments": [ { "id", "student_id", "year", "month_paid_for", "paid_on_month", "date", "amount" } ]
  * }
  *
- * The record field names are identical to the legacy IndexedDB records. A file that only has
- * "students" and "payments" (no "app"/"formatVersion") is accepted as legacy data.
+ * The record field names are identical to the legacy IndexedDB records, plus `amount` (the fee recorded on the
+ * payment; optional on import). A file without "app"/"formatVersion" or without `amount` is accepted as legacy
+ * data: those payments take the student's fee from the file.
  */
 object BackupCodec {
 
@@ -53,7 +54,8 @@ object BackupCodec {
                     .put("year", p.year)
                     .put("month_paid_for", p.monthPaidFor)
                     .put("paid_on_month", p.paidOnMonth ?: JSONObject.NULL)
-                    .put("date", Instant.ofEpochMilli(p.paidAtMillis).toString()),
+                    .put("date", Instant.ofEpochMilli(p.paidAtMillis).toString())
+                    .put("amount", p.amount),
             )
         }
         root.put("students", studentArray)
@@ -110,6 +112,7 @@ object BackupCodec {
                 monthPaidFor = o?.optNumber("month_paid_for")?.toIntOrNullSafe(),
                 paidOnMonth = o?.optNumber("paid_on_month")?.toIntOrNullSafe(),
                 dateMillis = o?.optDateMillis("date"),
+                amount = o?.optNumber("amount"),
             )
         }
         return students to payments

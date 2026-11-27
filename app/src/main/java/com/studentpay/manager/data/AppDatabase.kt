@@ -5,9 +5,12 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 
 /**
  * Version 1 = first native schema (mirrors the legacy IndexedDB `StudentPayDB` v1 stores).
+ * Version 2 = payments record the amount charged at the time (`amount`), so editing a student's fee
+ *             no longer rewrites past totals.
  *
  * Migration rule for every future change: bump [version], add a Migration to [MIGRATIONS], commit the
  * generated schema JSON from app/schemas, and add a MigrationTestHelper test. Never use a destructive fallback:
@@ -15,7 +18,7 @@ import androidx.room.migration.Migration
  */
 @Database(
     entities = [StudentEntity::class, PaymentEntity::class],
-    version = 1,
+    version = 2,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -25,8 +28,24 @@ abstract class AppDatabase : RoomDatabase() {
     companion object {
         const val NAME = "student_pay.db"
 
-        /** Empty at v1. Add Migration(1, 2) etc. here. */
-        val MIGRATIONS: Array<Migration> = emptyArray()
+        /**
+         * v1 -> v2: add `payments.amount` and backfill every existing payment with its student's CURRENT fee
+         * (the best information that exists: v1 never stored the historical amount). From now on the amount is
+         * written when the payment is recorded and never changes.
+         * The SQL is kept in [MIGRATION_1_2_SQL] so it can be tested against a real SQLite.
+         */
+        val MIGRATION_1_2: Migration = object : Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                MIGRATION_1_2_SQL.forEach { db.execSQL(it) }
+            }
+        }
+
+        val MIGRATION_1_2_SQL: List<String> = listOf(
+            "ALTER TABLE payments ADD COLUMN amount INTEGER NOT NULL DEFAULT 0",
+            "UPDATE payments SET amount = COALESCE((SELECT monthly_fee FROM students WHERE students.id = payments.student_id), 0)",
+        )
+
+        val MIGRATIONS: Array<Migration> = arrayOf(MIGRATION_1_2)
 
         fun build(context: Context): AppDatabase =
             Room.databaseBuilder(context.applicationContext, AppDatabase::class.java, NAME)

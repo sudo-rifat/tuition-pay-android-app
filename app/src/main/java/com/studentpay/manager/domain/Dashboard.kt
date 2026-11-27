@@ -2,11 +2,16 @@ package com.studentpay.manager.domain
 
 /** Fast "is this student paid for this period" lookup. Built once per recomputation. */
 class PaidIndex(payments: Collection<Payment>) {
-    private val keys: HashSet<Triple<Long, Int, Int>> =
-        payments.mapTo(HashSet(payments.size * 2)) { Triple(it.studentId, it.year, it.monthPaidFor) }
+    private val byKey: HashMap<Triple<Long, Int, Int>, Payment> = HashMap(payments.size * 2)
 
-    fun isPaid(studentId: Long, period: Period): Boolean =
-        keys.contains(Triple(studentId, period.year, period.month))
+    init {
+        for (p in payments) byKey[Triple(p.studentId, p.year, p.monthPaidFor)] = p
+    }
+
+    fun isPaid(studentId: Long, period: Period): Boolean = paymentFor(studentId, period) != null
+
+    fun paymentFor(studentId: Long, period: Period): Payment? =
+        byKey[Triple(studentId, period.year, period.month)]
 }
 
 /** One student's row on Home / Payments for a selected collection month. */
@@ -15,13 +20,15 @@ data class StudentMonthStatus(
     /** The month the fee is FOR, after applying the student's payment type. */
     val target: Period,
     val isPaid: Boolean,
+    /** Recorded amount if paid; otherwise the student's current fee (what ticking would record). */
+    val amount: Int,
 )
 
 data class DashboardStats(
     val totalStudents: Int,
     val paidCount: Int,
     val dueCount: Int,
-    /** Sum of the CURRENT monthly fee of every paid student (legacy behaviour, app.js renderViewSection). */
+    /** Sum of the amounts RECORDED on the paid payments (not the students' current fees). */
     val collectedAmount: Long,
 )
 
@@ -46,12 +53,12 @@ object Dashboard {
         var collected = 0L
         val rows = students.map { s ->
             val target = PaymentRules.targetPeriod(s.type, collectionMonth, collectionYear)
-            val isPaid = index.isPaid(s.id, target)
-            if (isPaid) {
+            val payment = index.paymentFor(s.id, target)
+            if (payment != null) {
                 paid++
-                collected += s.monthlyFee
+                collected += payment.amount
             }
-            StudentMonthStatus(s, target, isPaid)
+            StudentMonthStatus(s, target, payment != null, payment?.amount ?: s.monthlyFee)
         }
         return DashboardResult(
             rows = rows,

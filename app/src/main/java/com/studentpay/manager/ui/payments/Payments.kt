@@ -268,7 +268,7 @@ private fun PaymentRow(row: StudentMonthStatus, index: Int, count: Int, onToggle
                     stringResource(
                         R.string.payments_row_support,
                         row.target.shortLabel(),
-                        formatTaka(row.student.monthlyFee.toLong()),
+                        formatTaka(row.amount.toLong()),
                         stringResource(if (row.student.type == PaymentType.A) R.string.type_a_short else R.string.type_b_short),
                     ),
                     style = MaterialTheme.typography.bodySmall,

@@ -5,7 +5,7 @@ Navigation Compose. No network permission, no third-party libraries beyond Andro
 
 ## Read this first: what has and has not been verified
 
-**Verified here (compiled and executed, 49 tests passing):** the whole domain layer (payment rules, dashboard maths,
+**Verified here (compiled and executed, 57 tests passing):** the whole domain layer (payment rules, dashboard maths,
 reports and PDF content, validation, PIN policy/hash/lock-out, backup validation), the JSON backup codec, and the
 migration path *from the real old `db.js`* (old data → export script → importer).
 
@@ -40,13 +40,25 @@ Unit tests: `./gradlew :app:testDebugUnitTest`.
    stored in `noBackupFilesDir` (never in Android backup). 4 digits = 10,000 combinations, so the Keystore binding and
    lock-out do the real work. This stops casual access; it is not server-grade security and does not resist a rooted
    device. The app hides itself from Recents/screenshots by default (toggle in Settings).
-4. **Amounts use the student's current fee**, exactly like the old dashboard and reports. Changing a fee therefore
-   changes past totals. A stored per-payment amount would fix this but cannot be reconstructed for imported history,
-   so I did not change it.
+4. **Each payment stores the fee it was recorded at.** The old app recomputed every total from the student's current
+   fee, so raising a fee from 1,000 to 1,500 silently rewrote old months. Now the amount is saved on the payment
+   when you tick it and never changes; editing the fee only affects future payments (the form says so). Home, the
+   student's history and all three PDFs show recorded amounts. Unpaid months show the current fee, which is what
+   ticking would record. Undo restores the original amount.
+   *Legacy data:* the old app never stored historical amounts, so they cannot be recovered. Imported old payments
+   (and any v1 database, via the v1→v2 migration) take the student's fee **as of the import/upgrade**; the restore
+   dialog tells you how many payments that applies to. Fix any months that matter by hand before importing, or note
+   that only history from before the move to the new app is affected.
 5. **Room 2.8.5, not Room 3**, and string-based navigation routes: fewer unknowns without a compiler, and no
    serialization plugin. Minimal DI (no Hilt). Standard Material 3 motion, one "hero" number on Home; I did not use the
    experimental Expressive components (utility app, no compiler to check them).
 6. Auto Backup is on for the database/settings; the PIN is deliberately excluded, so a restored phone asks for a new PIN.
+
+## Database versions
+v1 = students + payments. **v2 = `payments.amount`** (Room migration `MIGRATION_1_2`: add the column, backfill from
+the student's fee; its SQL was run against a real SQLite with the v1 schema, including orphan rows, and keeps the
+unique index and cascade). If you never installed a v1 build, nothing is migrated. Room writes `app/schemas/*.json`
+on the first build; commit them, and add a `MigrationTestHelper` test for the next schema change.
 
 ## Moving your old data (two ways)
 1. **Easiest:** deploy `legacy-export/old_app_with_export/` over your existing old app (same site). It is the old app

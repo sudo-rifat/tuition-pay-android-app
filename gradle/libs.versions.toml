@@ -2,7 +2,7 @@
 # Kotlin 2.4.20 and KSP 2.3.9 pair with it; if Android Studio's sync suggests a different Kotlin for AGP 9.5,
 # use that version for both `kotlin` here and the Compose compiler plugin (same version).
 [versions]
-agp = "9.5.1"
+agp = "9.3.0"
 kotlin = "2.4.20"
 ksp = "2.3.9"
 composeBom = "2026.11.01"

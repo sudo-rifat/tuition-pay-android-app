@@ -13,7 +13,7 @@ class YearTransitionScenarioTest {
     /** What the repository would store when each student is ticked in January 2027. */
     private fun storedForJanuary2027(s: Student): Payment {
         val t = PaymentRules.targetPeriod(s.type, collectionMonth = 0, collectionYear = 2027)
-        return Payment(0, s.id, t.year, t.month, 0, 1_000L)
+        return Payment(0, s.id, t.year, t.month, 0, 1_000L, s.monthlyFee)
     }
 
     @Test fun typeBTickedInJanuaryIsStoredAsPreviousDecember() {

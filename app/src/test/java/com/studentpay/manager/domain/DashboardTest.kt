@@ -10,7 +10,8 @@ class DashboardTest {
     private val b = Student(2, "Mina", PaymentType.B, 700)
     private val c = Student(3, "Tanvir", PaymentType.A, 0)
 
-    private fun pay(sid: Long, y: Int, m: Int) = Payment(0, sid, y, m, null, 1_000L)
+    private val fees = mapOf(1L to 500, 2L to 700, 3L to 0)
+    private fun pay(sid: Long, y: Int, m: Int) = Payment(0, sid, y, m, null, 1_000L, fees.getValue(sid))
 
     @Test fun statsCountPaidDueAndSumCurrentFees() {
         // Collection month = March 2026: A pays for Mar-2026, B pays for Feb-2026.

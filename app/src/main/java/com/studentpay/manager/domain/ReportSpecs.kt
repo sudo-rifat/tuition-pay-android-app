@@ -44,7 +44,7 @@ object ReportSpecs {
         subtitle = "Year ${r.year}  |  Generated $generatedOn",
         infoLines = listOf(
             "Student: ${r.student.name}",
-            "Monthly Fee: ${ReportFormat.money(r.student.monthlyFee.toLong())}",
+            "Current Monthly Fee: ${ReportFormat.money(r.student.monthlyFee.toLong())}",
             "Payment Type: ${ReportFormat.typeLabel(r.student.type)}",
         ),
         columns = listOf(
@@ -59,7 +59,7 @@ object ReportSpecs {
                 MonthState.PAID -> listOf(
                     label, "Paid",
                     m.paidAtMillis?.let { ReportFormat.date(it, zone) } ?: "N/A",
-                    ReportFormat.money(r.student.monthlyFee.toLong()),
+                    ReportFormat.money((m.amount ?: 0).toLong()),
                 )
                 MonthState.DUE -> listOf(label, "Due", "-", "-")
                 MonthState.FUTURE -> listOf(label, "Upcoming", "-", "-")
@@ -89,7 +89,7 @@ object ReportSpecs {
                 listOf(
                     row.student.name, "Paid",
                     ReportFormat.date(row.paidAtMillis!!, zone),
-                    ReportFormat.money(row.student.monthlyFee.toLong()),
+                    ReportFormat.money((row.amount ?: 0).toLong()),
                 )
             } else {
                 listOf(row.student.name, "Due", "-", "-")

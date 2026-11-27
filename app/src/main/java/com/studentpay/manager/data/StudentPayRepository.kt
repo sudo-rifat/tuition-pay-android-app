@@ -64,8 +64,9 @@ class StudentPayRepository(
 
     /**
      * Marks [student] as paid for the selected COLLECTION month/year. The stored period is derived with
-     * [PaymentRules] (Type A / Type B). If the record already exists its date is refreshed (legacy upsert)
-     * - the UNIQUE index guarantees there is never a second record.
+     * [PaymentRules] (Type A / Type B) and the amount recorded is the student's fee RIGHT NOW. If the record
+     * already exists only its date is refreshed (legacy upsert); its amount is kept. The UNIQUE index
+     * guarantees there is never a second record.
      */
     suspend fun markPaid(student: Student, collectionMonth: Int, collectionYear: Int): Payment =
         db.withTransaction {
@@ -82,6 +83,7 @@ class StudentPayRepository(
                     monthPaidFor = target.month,
                     paidOnMonth = collectionMonth,
                     paidAt = now,
+                    amount = student.monthlyFee,
                 )
                 entity.copy(id = payments.insert(entity)).toDomain()
             }

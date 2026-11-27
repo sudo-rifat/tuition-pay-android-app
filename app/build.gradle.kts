@@ -6,7 +6,11 @@ plugins {
 
 android {
     namespace = "com.studentpay.manager"
-    compileSdk = 36
+    compileSdk {
+        version = release(37) {
+            minorApiLevel = 1
+        }
+    }
 
     defaultConfig {
         applicationId = "com.studentpay.manager"
@@ -51,6 +55,7 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.ui.tooling.preview)
     debugImplementation(libs.androidx.compose.ui.tooling)
+    implementation("androidx.compose.material:material-icons-extended")
 
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)

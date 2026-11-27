@@ -48,15 +48,17 @@ data class PaymentEntity(
     @ColumnInfo(name = "paid_on_month") val paidOnMonth: Int?,
     /** UTC epoch millis (legacy `date` ISO string). */
     @ColumnInfo(name = "paid_at") val paidAt: Long,
+    /** Fee charged when this payment was recorded (whole Taka). Added in DB version 2; never edited afterwards. */
+    @ColumnInfo(name = "amount", defaultValue = "0") val amount: Int,
 )
 
 internal fun StudentEntity.toDomain(): Student =
     Student(id, name, PaymentType.fromCode(paymentType) ?: PaymentType.A, monthlyFee)
 
 internal fun PaymentEntity.toDomain(): Payment =
-    Payment(id, studentId, year, monthPaidFor, paidOnMonth, paidAt)
+    Payment(id, studentId, year, monthPaidFor, paidOnMonth, paidAt, amount)
 
 internal fun Student.toEntity(): StudentEntity = StudentEntity(id, name, type.code, monthlyFee)
 
 internal fun Payment.toEntity(): PaymentEntity =
-    PaymentEntity(id, studentId, year, monthPaidFor, paidOnMonth, paidAtMillis)
+    PaymentEntity(id, studentId, year, monthPaidFor, paidOnMonth, paidAtMillis, amount)

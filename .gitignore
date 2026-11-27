@@ -8,3 +8,13 @@
 /captures
 .externalNativeBuild
 .cxx
+
+# Kotlin cache
+.kotlin/
+
+# Generated Android packages
+*.apk
+*.aab
+
+# OS generated files
+Thumbs.db

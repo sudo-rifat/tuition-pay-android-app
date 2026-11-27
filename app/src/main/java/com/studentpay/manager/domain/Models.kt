@@ -57,6 +57,8 @@ data class Student(
  * [year] + [monthPaidFor] identify the month the fee is FOR (legacy fields `year`, `month_paid_for`).
  * [paidOnMonth] is the month in which it was collected (legacy `paid_on_month`), null for very old records.
  * [paidAtMillis] is the payment date as UTC epoch millis (legacy `date`, an ISO string).
+ * [amount] is the fee (whole Taka) that was charged WHEN the payment was recorded. It never changes
+ * afterwards, so editing a student's monthly fee cannot alter past totals.
  */
 data class Payment(
     val id: Long,
@@ -65,6 +67,7 @@ data class Payment(
     val monthPaidFor: Int,
     val paidOnMonth: Int?,
     val paidAtMillis: Long,
+    val amount: Int,
 ) {
     val period: Period get() = Period(year, monthPaidFor)
 }

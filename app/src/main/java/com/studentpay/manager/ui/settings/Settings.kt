@@ -274,6 +274,7 @@ private fun RestoreConfirmDialog(c: RestoreState.Confirm, onConfirm: () -> Unit,
                     if (s.duplicatePaymentsMerged > 0) Text(stringResource(R.string.restore_p_dupes, s.duplicatePaymentsMerged))
                     if (s.datesDefaulted > 0) Text(stringResource(R.string.restore_p_dates, s.datesDefaulted))
                     if (s.feesDefaulted > 0) Text(stringResource(R.string.restore_p_fees, s.feesDefaulted))
+                    if (s.amountsDefaulted > 0) Text(stringResource(R.string.restore_p_amounts, s.amountsDefaulted))
                 }
                 Text(
                     stringResource(R.string.restore_replaces, c.currentStudents, c.currentPayments),

@@ -11,7 +11,8 @@ class ReportsTest {
     private val s2 = Student(2, "Mina", PaymentType.B, 700)
     // 2026-03-05T00:00:00Z
     private val march5 = 1_772_668_800_000L
-    private fun pay(sid: Long, y: Int, m: Int, t: Long = march5) = Payment(0, sid, y, m, null, t)
+    private fun pay(sid: Long, y: Int, m: Int, t: Long = march5) =
+        Payment(0, sid, y, m, null, t, if (sid == 1L) 500 else 700)
 
     @Test fun studentReportCountsPaidAndDueForTheYear() {
         val payments = listOf(pay(1, 2026, 0), pay(1, 2026, 1), pay(1, 2025, 5), pay(2, 2026, 0))

@@ -225,7 +225,7 @@ private fun StudentStatusRow(row: StudentMonthStatus, index: Int, count: Int, on
                     stringResource(
                         R.string.row_support,
                         stringResource(if (row.student.type == PaymentType.A) R.string.type_a_short else R.string.type_b_short),
-                        formatTaka(row.student.monthlyFee.toLong()),
+                        formatTaka(row.amount.toLong()),
                         row.target.shortLabel(),
                     ),
                     style = MaterialTheme.typography.bodySmall,

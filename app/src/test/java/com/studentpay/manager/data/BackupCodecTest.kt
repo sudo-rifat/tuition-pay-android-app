@@ -37,6 +37,10 @@ class BackupCodecTest {
         assertEquals(1, plan.summary.feesDefaulted)
         assertEquals(4, plan.payments.size)
         assertEquals(1, plan.summary.datesDefaulted)                            // legacy payment without date
+        // Legacy payments never stored an amount: they take the student's fee, and the importer says so.
+        assertEquals(4, plan.summary.amountsDefaulted)
+        assertEquals(500, plan.payments.first { it.studentId == 1L && it.monthPaidFor == 9 }.amount)
+        assertEquals(700, plan.payments.first { it.studentId == 2L && it.year == 2025 }.amount)
         assertEquals(0, plan.summary.studentsSkipped)
         val decJan = plan.payments.first { it.studentId == 2L && it.year == 2025 }
         assertEquals(11, decJan.monthPaidFor)                                   // Type B Jan -> previous Dec, kept as stored
@@ -47,7 +51,7 @@ class BackupCodecTest {
 
     @Test fun roundTripKeepsEverything() {
         val students = listOf(Student(5, "Rafi \"Q\" Ahmed", PaymentType.A, 500), Student(8, "মিনা", PaymentType.B, 0))
-        val payments = listOf(Payment(1, 5, 2026, 1, 1, 1_772_668_800_000L), Payment(2, 8, 2025, 11, null, 1_772_668_800_123L))
+        val payments = listOf(Payment(1, 5, 2026, 1, 1, 1_772_668_800_000L, 1000), Payment(2, 8, 2025, 11, null, 1_772_668_800_123L, 0))
         val json = BackupCodec.encode(students, payments, 1_772_668_800_000L)
         val (rs, rp) = BackupCodec.decode(json)
         val plan = BackupValidator.validate(rs, rp, 1L)

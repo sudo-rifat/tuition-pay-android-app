@@ -233,7 +233,7 @@ fun StudentDetailScreen(studentId: Long, onBack: () -> Unit, onEdit: () -> Unit,
                     }
                 }
                 itemsIndexed(state.history, key = { _, p -> p.id }) { index, p ->
-                    HistoryRow(p, student, index, state.history.size)
+                    HistoryRow(p, index, state.history.size)
                 }
                 item(key = "report") {
                     Button(
@@ -333,7 +333,7 @@ private fun MonthTile(label: String, state: MonthState, modifier: Modifier) {
 }
 
 @Composable
-private fun HistoryRow(p: Payment, student: Student, index: Int, count: Int) {
+private fun HistoryRow(p: Payment, index: Int, count: Int) {
     Surface(
         shape = groupedShape(index, count),
         color = MaterialTheme.colorScheme.surfaceContainerLow,
@@ -352,7 +352,7 @@ private fun HistoryRow(p: Payment, student: Student, index: Int, count: Int) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            Text(formatTaka(student.monthlyFee.toLong()), style = MaterialTheme.typography.titleSmall)
+            Text(formatTaka(p.amount.toLong()), style = MaterialTheme.typography.titleSmall)
         }
     }
 }

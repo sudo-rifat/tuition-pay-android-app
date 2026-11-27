@@ -194,6 +194,13 @@ private fun FormContent(
                 modifier = Modifier.fillMaxWidth(),
             )
 
+            if (initial != null) {
+                Text(
+                    stringResource(R.string.form_fee_note),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
             Text(stringResource(R.string.form_type), style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.primary)
             TypeOption(

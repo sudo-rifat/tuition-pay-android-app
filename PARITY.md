@@ -11,7 +11,7 @@ compiled and run (see README). "Device QA" = needs a manual check on a phone.
 | 4 | Type B: pay month = **previous** month, Jan → previous Dec (`getTargetMonthIndex/Year`) | same function; see README "Type B wording" | Verified |
 | 5 | Unique payment per student+year+month (`student_year_month` index) | UNIQUE index; `markPaid` upserts like `addPayment` | Verified (logic) / Device QA |
 | 6 | Tick = add payment with date now; untick = delete (`handleCheckbox`) | Payments screen; untick adds **Undo** | Device QA |
-| 7 | Dashboard stats per selected month: paid, due, total earned = Σ current fee of paid students | `Dashboard.compute` | Verified |
+| 7 | Dashboard stats per selected month: paid, due, total earned (old: Σ *current* fee) | `Dashboard.compute`, now Σ **recorded** amounts | Verified |
 | 8 | 12-month status grid; past year all due, current year due up to current month, future grey | `Dashboard.monthStates`, shown on Student detail | Verified |
 | 9 | Month/year selectors; year range now-1 … now+5 | Month stepper + picker; `SelectionBounds.collection` | Verified |
 | 10 | Student report (jsPDF) | PDF via `PdfDocument`; **now filtered by chosen year** with paid/due/upcoming months (old one ignored the year) | Verified (content) / Device QA |
@@ -25,9 +25,11 @@ compiled and run (see README). "Device QA" = needs a manual check on a phone.
 | 18 | Activation (Device ID, code = ID×3+77, lock) | **Removed entirely**: no code, UI, storage or permission | Verified by search (no references) |
 | 19 | Offline PWA (service worker) | Native; **no INTERNET permission** | Verified (manifest) |
 | 20 | Legacy data migration `runMigration` (missing `date` → now) | Importer gives missing dates the import time; reports it | Verified |
+| 21 | *(new)* Fee on each payment; fee edits never change past totals | `payments.amount`, DB v2 + migration, backup field `amount` | Verified (logic, SQL) |
 
 ## Intentional differences (all flagged in the README)
 - Reversing a payment can be undone (new).
+- Fee changes no longer rewrite history: the amount is recorded on each payment (old app recomputed from the current fee).
 - Student report honours the year (the old one ignored it, as the brief asks for year selection).
 - Monthly report also lists students who are due (the brief asks for due totals).
 - Filter chips All / Due / Paid on Home and Payments (brief: "easy to identify unpaid students").

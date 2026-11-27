@@ -19,6 +19,8 @@ data class RawPayment(
     val monthPaidFor: Int?,
     val paidOnMonth: Int?,
     val dateMillis: Long?,
+    /** Fee recorded on the payment. Absent in legacy/older files. */
+    val amount: Long?,
 )
 
 data class ImportSummary(
@@ -35,12 +37,17 @@ data class ImportSummary(
     val datesDefaulted: Int,
     /** Students without a fee got 0 (legacy `monthly_fee || 0`). */
     val feesDefaulted: Int,
+    /**
+     * Payments with no recorded amount (every payment of a legacy export) take the student's fee from the
+     * file. The real historical amounts of those payments were never stored by the old app.
+     */
+    val amountsDefaulted: Int,
     /** Human-readable details, capped, for the confirmation dialog. */
     val notes: List<String>,
 ) {
     val hasProblems: Boolean
         get() = studentsSkipped > 0 || paymentsSkippedOrphan > 0 || paymentsSkippedInvalid > 0 ||
-            duplicatePaymentsMerged > 0 || datesDefaulted > 0 || feesDefaulted > 0
+            duplicatePaymentsMerged > 0 || datesDefaulted > 0 || feesDefaulted > 0 || amountsDefaulted > 0
 }
 
 data class ImportPlan(val students: List<Student>, val payments: List<Payment>, val summary: ImportSummary)
@@ -93,6 +100,7 @@ object BackupValidator {
         // ---- payments ----
         // key = student/year/month; value = best record so far
         val kept = LinkedHashMap<Triple<Long, Int, Int>, Payment>()
+        val amountDefaultedKeys = HashSet<Triple<Long, Int, Int>>()
         var orphan = 0
         var invalid = 0
         var merged = 0
@@ -115,15 +123,22 @@ object BackupValidator {
                     val dateMissing = r.dateMillis == null
                     val date = r.dateMillis ?: importedAtMillis
                     val paidOn = r.paidOnMonth?.takeIf { it in 0..11 }
-                    val candidate = Payment(0L, sid, y, m, paidOn, date)
+                    val recorded = r.amount?.takeIf { it in 0..StudentValidator.MAX_FEE.toLong() }?.toInt()
+                    val amountDefaulted = recorded == null
+                    val amount = recorded ?: students.getValue(sid).monthlyFee
+                    val candidate = Payment(0L, sid, y, m, paidOn, date, amount)
                     val key = Triple(sid, y, m)
                     val existing = kept[key]
                     if (existing == null) {
                         if (dateMissing) datesDefaulted++
                         kept[key] = candidate
+                        if (amountDefaulted) amountDefaultedKeys.add(key)
                     } else {
                         merged++
-                        if (candidate.paidAtMillis > existing.paidAtMillis && !dateMissing) kept[key] = candidate
+                        if (candidate.paidAtMillis > existing.paidAtMillis && !dateMissing) {
+                            kept[key] = candidate
+                            if (amountDefaulted) amountDefaultedKeys.add(key) else amountDefaultedKeys.remove(key)
+                        }
                     }
                 }
             }
@@ -140,6 +155,7 @@ object BackupValidator {
             duplicatePaymentsMerged = merged,
             datesDefaulted = datesDefaulted,
             feesDefaulted = feesDefaulted,
+            amountsDefaulted = amountDefaultedKeys.size,
             notes = notes,
         )
         return ImportPlan(students.values.toList(), kept.values.toList(), summary)
