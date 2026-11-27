@@ -62,6 +62,13 @@ class ReportsTest {
         assertEquals("Grand Total for 2026: Tk 500", y.summaryLines[0])
     }
 
+    @Test fun typeLabelsUseCurrentAndPreviousMonthWording() {
+        assertEquals("Current Month", ReportFormat.typeLabel(PaymentType.A))
+        assertEquals("Previous Month", ReportFormat.typeLabel(PaymentType.B))
+        val spec = ReportSpecs.student(Reports.student(s2, emptyList(), 2026, Period(2026, 0)), "01/01/2026", utc)
+        assertEquals("Payment Type: Previous Month", spec.infoLines[2])
+    }
+
     @Test fun moneyFormatsWithThousandsSeparator() {
         assertEquals("Tk 1,234,567", ReportFormat.money(1_234_567))
         assertEquals("Tk 0", ReportFormat.money(0))

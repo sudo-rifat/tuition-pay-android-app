@@ -32,7 +32,7 @@ object ReportFormat {
 
     fun typeLabel(type: PaymentType): String = when (type) {
         PaymentType.A -> "Current Month"
-        PaymentType.B -> "Next Month"
+        PaymentType.B -> "Previous Month"
     }
 }
 

@@ -25,6 +25,18 @@ class PaymentRulesTest {
         assertEquals(Period(2099, 11), PaymentRules.targetPeriod(PaymentType.B, 0, 2100))
     }
 
+    @Test fun typeB_isAlwaysTheImmediatelyPrecedingCalendarMonth() {
+        // The three business examples, exactly.
+        assertEquals(Period(2026, 1), PaymentRules.targetPeriod(PaymentType.B, 2, 2026))   // March 2026    -> February 2026
+        assertEquals(Period(2025, 11), PaymentRules.targetPeriod(PaymentType.B, 0, 2026))  // January 2026  -> December 2025
+        assertEquals(Period(2026, 10), PaymentRules.targetPeriod(PaymentType.B, 11, 2026)) // December 2026 -> November 2026
+        // And for every month of the year: target is exactly one month before the collection month.
+        for (y in listOf(2025, 2026, 2027)) for (m in 0..11) {
+            assertEquals(Period(y, m).plusMonths(-1), PaymentRules.targetPeriod(PaymentType.B, m, y))
+            assertEquals(Period(y, m), PaymentRules.targetPeriod(PaymentType.A, m, y))
+        }
+    }
+
     @Test fun typeA_januaryStaysInThatYear() {
         assertEquals(Period(2026, 0), PaymentRules.targetPeriod(PaymentType.A, 0, 2026))
     }

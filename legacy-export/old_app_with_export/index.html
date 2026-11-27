@@ -20,7 +20,7 @@
         <div class="security-content">
             <h2>🔴 App Locked</h2>
             <p>This copy is not activated. Contact Admin.</p>
-            
+
             <div class="device-id-box">
                 <small>RELAY THIS DEVICE ID:</small>
                 <h1 id="deviceIdDisplay" style="letter-spacing: 5px; color: var(--primary);">----</h1>
@@ -54,7 +54,7 @@
 
     <main id="mainContainer">
         <div id="loading" class="loading-spinner">Loading...</div>
-        
+
         <!-- VIEW SECTION (Status) -->
         <section id="viewSection">
             <!-- Global Filter Bar -->
@@ -115,7 +115,7 @@
                 <select id="collectionYear" class="month-select">
                     <!-- Options generated JS -->
                 </select>
-                
+
             </div>
             <div id="updateList" class="student-list">
                 <!-- Update items injected here -->
@@ -133,7 +133,7 @@
             <button id="helpBtn" class="btn-primary btn-block mb-4" style="background-color: var(--status-paid);" onclick="document.getElementById('helpModal').classList.remove('hidden')">
                 <span>📖 ব্যবহার বিধি (User Manual)</span>
             </button>
-            
+
             <button id="exportOldDataBtn" class="btn-primary btn-block mb-4 btn-secondary" onclick="exportOldData().catch(function(e){alert('Export failed: '+e.message)})">
                 <span>⬇ Export data for the new Android app</span>
             </button>
@@ -146,7 +146,7 @@
             <!-- Reports Section -->
             <div class="reports-section">
                 <h2 class="section-title">📄 Generate Reports</h2>
-                
+
                 <div class="form-group">
                     <label for="reportType">Report Type</label>
                     <select id="reportType" class="month-select">
@@ -224,7 +224,7 @@
                         </label>
                         <label class="radio-label">
                             <input type="radio" name="paymentType" value="B">
-                            <span>Type B (Next Month)</span>
+                            <span>Type B (Previous Month)</span>
                         </label>
                     </div>
                 </div>

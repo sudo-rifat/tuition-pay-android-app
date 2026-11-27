@@ -5,7 +5,7 @@ Navigation Compose. No network permission, no third-party libraries beyond Andro
 
 ## Read this first: what has and has not been verified
 
-**Verified here (compiled and executed, 57 tests passing):** the whole domain layer (payment rules, dashboard maths,
+**Verified here (compiled and executed, 59 tests passing):** the whole domain layer (payment rules, dashboard maths,
 reports and PDF content, validation, PIN policy/hash/lock-out, backup validation), the JSON backup codec, and the
 migration path *from the real old `db.js`* (old data → export script → importer).
 
@@ -28,11 +28,12 @@ Unit tests: `./gradlew :app:testDebugUnitTest`.
 
 ## Decisions you should know about
 
-1. **Type B wording contradicts your brief; I followed the code.** The brief says Type B "applies to the following
-   month". The old code (`getTargetMonthIndex`) does the opposite: a Type B payment collected in March is stored for
-   **February**, and in January for the previous **December**. You said not to change this logic, so it is ported
-   exactly, in one function (`PaymentRules`), with tests. The form and help text describe it plainly. If the code
-   was wrong rather than the brief, it is a two-line change; tell me.
+1. **Payment types (confirmed).** Type A = *Current Month*: money collected in a month is for that month.
+   Type B = *Previous Month*: money collected in a month is for the immediately preceding calendar month, i.e.
+   March 2026 → February 2026, January 2026 → December 2025, December 2026 → November 2026. This is the old app's
+   `getTargetMonthIndex/Year` logic, unchanged, in one function (`PaymentRules`) and covered by tests for exactly
+   these examples. The old app's label for Type B was "Next Month"; that label was misleading and is now
+   "Previous Month" everywhere (form, student details, Payments rows, help in Bengali and English, PDFs, docs).
 2. **Forgot PIN = erase and restore.** A 4-digit PIN cannot be recovered. To meet "never lock out permanently" without
    letting anyone bypass the PIN, "Forgot PIN?" offers *erase all data, set a new PIN, restore from backup*. Wrong
    PINs only cause temporary waits (30 s doubling to 10 min after every 5 tries). The setup screen says this.
@@ -62,8 +63,8 @@ on the first build; commit them, and add a `MigrationTestHelper` test for the ne
 
 ## Moving your old data (two ways)
 1. **Easiest:** deploy `legacy-export/old_app_with_export/` over your existing old app (same site). It is the old app
-   plus one button, *Export data for the new Android app* in Settings (3 small edits; `app.js`/`db.js` untouched; cache
-   version bumped so phones pick it up). Tap it, then in the new app: Settings → Restore backup.
+   plus one button, *Export data for the new Android app* in Settings (small edits: the button, and the Type B label corrected from "Next Month" to "Previous Month" in `index.html`/`app.js`;
+   payment logic and `db.js` untouched; cache version bumped so phones pick it up). Tap it, then in the new app: Settings → Restore backup.
 2. Paste `legacy-export/export-old-data.js` into the browser console of the old app.
 Both read `StudentPayDB` read-only. Restore shows a summary (skipped, duplicate and date-less records) and asks to
 confirm before replacing anything; it runs as one transaction. Student ids are preserved.

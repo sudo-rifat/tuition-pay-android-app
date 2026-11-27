@@ -1,4 +1,4 @@
-const CACHE_NAME = 'student-pay-v11-export-patch';
+const CACHE_NAME = 'student-pay-v12-export-patch';
 const ASSETS_TO_CACHE = [
     './',
     './index.html',

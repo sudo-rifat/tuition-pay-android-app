@@ -24,8 +24,8 @@
     <string name="type_b_short">Type B</string>
     <string name="type_a_title">Type A: Current month</string>
     <string name="type_a_desc">A payment collected in a month is for that same month.</string>
-    <string name="type_b_title">Type B: Next month</string>
-    <string name="type_b_desc">The fee is collected the month after. A payment collected in March is recorded for February (January collects December of the previous year).</string>
+    <string name="type_b_title">Type B: Previous month</string>
+    <string name="type_b_desc">A payment collected in a month is recorded for the month before it. Collected in March, it is for February; collected in January, it is for December of the previous year.</string>
     <string name="filter_all">All (%1$d)</string>
     <string name="filter_due">Due (%1$d)</string>
     <string name="filter_paid">Paid (%1$d)</string>
@@ -164,7 +164,7 @@
     <string name="help_en_1_title">1. Add students</string>
     <string name="help_en_1_body">Open Students and tap Add student. Enter the name, the monthly fee and the payment type, then Save. Use the ⋮ menu on a student to edit or delete. Deleting a student also deletes that student’s payment records. Changing a student’s fee only affects payments recorded afterwards; past payments keep their recorded amount.</string>
     <string name="help_en_2_title">2. Payment types</string>
-    <string name="help_en_2_body">Type A (Current month): money collected in a month is for that same month. Type B (Next month): the fee is collected the month after, so money collected in March is recorded for February, and money collected in January is recorded for December of the previous year.</string>
+    <string name="help_en_2_body">Type A (Current month): money collected in a month is for that same month. Type B (Previous month): money collected in a month is always recorded for the month right before it. Collected in March 2026 it is for February 2026, collected in January 2026 it is for December 2025, and collected in December 2026 it is for November 2026.</string>
     <string name="help_en_3_title">3. Record payments</string>
     <string name="help_en_3_body">Open Payments and choose the month and year with the arrows or by tapping the month name. Tick a student when you receive the fee; today’s date is saved automatically. Untick to reverse it (an Undo button appears). A student can be paid only once for the same month.</string>
     <string name="help_en_4_title">4. Home</string>
@@ -178,7 +178,7 @@
     <string name="help_bn_1_title">১. শিক্ষার্থী যোগ করা</string>
     <string name="help_bn_1_body">Students ট্যাবে Add student চাপুন। নাম, মাসিক ফি ও পেমেন্ট টাইপ দিয়ে Save করুন। শিক্ষার্থীর পাশের ⋮ মেনু থেকে Edit বা Delete করা যায়। Delete করলে ওই শিক্ষার্থীর সব পেমেন্ট রেকর্ডও মুছে যায়। ফি বদলালে শুধু পরের পেমেন্টে নতুন ফি ধরা হয়; আগের পেমেন্টের টাকার অঙ্ক অপরিবর্তিত থাকে।</string>
     <string name="help_bn_2_title">২. পেমেন্ট টাইপ</string>
-    <string name="help_bn_2_body">Type A (Current Month): যে মাসে টাকা নিচ্ছেন সেই মাসের ফি হিসেবেই জমা হয়। Type B (Next Month): ফি পরের মাসে নেওয়া হয়, তাই মার্চে টাকা নিলে তা ফেব্রুয়ারির ফি হিসেবে এবং জানুয়ারিতে নিলে আগের বছরের ডিসেম্বরের ফি হিসেবে জমা হয়।</string>
+    <string name="help_bn_2_body">Type A (Current Month): যে মাসে টাকা নিচ্ছেন সেই মাসের ফি হিসেবেই জমা হয়। Type B (Previous Month): যে মাসে টাকা নিচ্ছেন তা সবসময় তার ঠিক আগের মাসের ফি হিসেবে জমা হয়। যেমন ২০২৬ সালের মার্চে নিলে ফেব্রুয়ারির ফি, জানুয়ারিতে নিলে আগের বছরের (২০২৫) ডিসেম্বরের ফি, আর ডিসেম্বরে নিলে নভেম্বরের ফি।</string>
     <string name="help_bn_3_title">৩. পেমেন্ট নেওয়া</string>
     <string name="help_bn_3_body">Payments ট্যাবে তীর চিহ্ন বা মাসের নামে চেপে মাস ও বছর বেছে নিন। টাকা পেলে শিক্ষার্থীর নামের পাশের বক্সে টিক দিন; আজকের তারিখ নিজে থেকেই সেভ হয়। ভুল হলে টিক তুলে দিন, Undo বোতাম আসবে। একই মাসের জন্য একজনের পেমেন্ট দুবার জমা হয় না।</string>
     <string name="help_bn_4_title">৪. হোম</string>

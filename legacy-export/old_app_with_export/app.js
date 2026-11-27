@@ -5,10 +5,10 @@ const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep
 let students = [];
 let payments = [];
 let currentTab = 'viewSection'; // Default to Status Dashboard
-let collectionMonthIdx = new Date().getMonth(); 
-let dashboardMonthIdx = new Date().getMonth(); 
+let collectionMonthIdx = new Date().getMonth();
+let dashboardMonthIdx = new Date().getMonth();
 let collectionYear = new Date().getFullYear();
-let dashboardYear = new Date().getFullYear(); 
+let dashboardYear = new Date().getFullYear();
 
 // DOM Elements
 const viewSection = document.getElementById('viewSection');
@@ -51,7 +51,7 @@ async function init() {
     try {
         checkActivation(); // STEP 1: Check License
         initPassword(); // Ensure Password exists
-        checkAuth(); 
+        checkAuth();
         setupSecurity();
         setupPasswordChange(); // New Feature
         setupHelp(); // User Manual
@@ -59,7 +59,7 @@ async function init() {
         setupDateSelectors();
         await loadData();
         await runMigration(); // Fix old payments without dates
-        render(); 
+        render();
         setupReports(); // PDF Report System
     } catch (err) {
         console.error('Init error:', err);
@@ -179,7 +179,7 @@ function setupPasswordChange() {
         e.preventDefault();
         const oldPass = oldPinInput.value;
         const newPass = newPinInput.value;
-        
+
         if (oldPass !== getPassword()) {
             alert('Current password is incorrect.');
             return;
@@ -209,7 +209,7 @@ function setupPasswordChange() {
 async function loadData() {
     const [allStudents, allPayments] = await Promise.all([
         db.getStudents(),
-        db.getPayments() 
+        db.getPayments()
     ]);
     students = allStudents;
     payments = allPayments;
@@ -220,7 +220,7 @@ let migrationDone = false;
 async function runMigration() {
     if (migrationDone) return;
     migrationDone = true;
-    
+
     for (const payment of payments) {
         if (!payment.date) {
             payment.date = new Date().toISOString();
@@ -243,7 +243,7 @@ function setupTabs() {
 
 function switchTab(tabId) {
     currentTab = tabId;
-    
+
     // UI Updates
     navBtns.forEach(btn => {
         if (btn.dataset.target === tabId) btn.classList.add('active');
@@ -255,7 +255,7 @@ function switchTab(tabId) {
     settingsSection.classList.add('hidden');
 
     document.getElementById(tabId).classList.remove('hidden');
-    
+
     render();
 }
 
@@ -269,15 +269,15 @@ function setupDateSelectors() {
     for (let i = baseYear - 1; i <= baseYear + 5; i++) {
         yearOptions.push(i);
     }
-    
+
     const yearOptionsHtml = yearOptions.map(y => `<option value="${y}">${y}</option>`).join('');
 
     // --- Collection Selectors (Update Tab) ---
     // Month
-    collectionMonthSelect.innerHTML = monthNames.map((m, i) => 
+    collectionMonthSelect.innerHTML = monthNames.map((m, i) =>
         `<option value="${i}" ${i === collectionMonthIdx ? 'selected' : ''}>${m}</option>`
     ).join('');
-    
+
     // Year
     collectionYearSelect.innerHTML = yearOptionsHtml;
     collectionYearSelect.value = collectionYear;
@@ -285,7 +285,7 @@ function setupDateSelectors() {
     // Listeners
     collectionMonthSelect.addEventListener('change', (e) => {
         collectionMonthIdx = parseInt(e.target.value);
-        render(); 
+        render();
     });
     collectionYearSelect.addEventListener('change', (e) => {
         collectionYear = parseInt(e.target.value);
@@ -294,7 +294,7 @@ function setupDateSelectors() {
 
     // --- Dashboard Selectors (Status Tab) ---
     // Month
-    dashboardMonthSelect.innerHTML = monthNames.map((m, i) => 
+    dashboardMonthSelect.innerHTML = monthNames.map((m, i) =>
         `<option value="${i}" ${i === dashboardMonthIdx ? 'selected' : ''}>${m}</option>`
     ).join('');
 
@@ -305,11 +305,11 @@ function setupDateSelectors() {
     // Listeners
     dashboardMonthSelect.addEventListener('change', (e) => {
         dashboardMonthIdx = parseInt(e.target.value);
-        renderViewSection(); 
+        renderViewSection();
     });
     dashboardYearSelect.addEventListener('change', (e) => {
         dashboardYear = parseInt(e.target.value);
-        renderViewSection(); 
+        renderViewSection();
     });
 }
 
@@ -323,7 +323,7 @@ function render() {
     } else {
         viewEmptyStateEl.classList.add('hidden');
     }
-    
+
     if (currentTab === 'viewSection') {
         renderViewSection();
     } else if (currentTab === 'updateSection') {
@@ -340,8 +340,8 @@ function renderViewSection() {
     viewListEl.innerHTML = '';
 
     // Use SELECTED Dashboard Year/Month
-    const targetBaseYear = dashboardYear; 
-    
+    const targetBaseYear = dashboardYear;
+
     // 1. Calculate Dashboard Stats for SELECTED Dashboard Month/Year
     let totalEarned = 0;
     let paidCount = 0;
@@ -351,9 +351,9 @@ function renderViewSection() {
         // Check if Paid for Dashboard Month
         const targetMonth = getTargetMonthIndex(student.payment_type, dashboardMonthIdx);
         const targetYear = getTargetYear(student.payment_type, dashboardMonthIdx, targetBaseYear);
-        
-        const isPaid = payments.some(p => 
-            p.student_id === student.id && 
+
+        const isPaid = payments.some(p =>
+            p.student_id === student.id &&
             p.month_paid_for === targetMonth &&
             p.year === targetYear
         );
@@ -377,18 +377,18 @@ function renderViewSection() {
         const card = document.createElement('div');
         card.className = 'student-card';
 
-        const typeLabel = student.payment_type === 'A' ? 'Current Month' : 'Next Month';
+        const typeLabel = student.payment_type === 'A' ? 'Current Month' : 'Previous Month';
         const feeLabel = student.monthly_fee ? `৳${student.monthly_fee}` : 'No Fee';
-        
+
         let statusGridHtml = '';
         monthNames.forEach((name, index) => {
-            const isPaid = payments.some(p => 
-                p.student_id === student.id && 
+            const isPaid = payments.some(p =>
+                p.student_id === student.id &&
                 p.month_paid_for === index &&
                 p.year === targetBaseYear
             );
 
-            let statusClass = 'status-future'; 
+            let statusClass = 'status-future';
             if (isPaid) {
                 statusClass = 'status-paid';
             } else {
@@ -396,7 +396,7 @@ function renderViewSection() {
                 // If viewing a Past Year -> All unpaid are DUE (Red)
                 // If viewing Current Year -> Past months are DUE
                 // If viewing Future Year -> All are Future (Grey)
-                
+
                 const now = new Date();
                 const realCurrentYear = now.getFullYear();
                 const realCurrentMonth = now.getMonth();
@@ -410,7 +410,7 @@ function renderViewSection() {
                 }
             }
 
-            
+
             statusGridHtml += `
             <div class="status-item">
                 <div class="status-dot ${statusClass}">${name}</div>
@@ -435,7 +435,7 @@ function renderViewSection() {
 // UPDATE SECTION: Collection ACTION
 function renderUpdateSection() {
     updateListEl.innerHTML = '';
-    
+
     students.forEach(student => {
         const card = document.createElement('div');
         card.className = 'student-card';
@@ -443,9 +443,9 @@ function renderUpdateSection() {
 
         const targetMonth = getTargetMonthIndex(student.payment_type, collectionMonthIdx);
         const targetYear = getTargetYear(student.payment_type, collectionMonthIdx, collectionYear);
-        
-        const isPaid = payments.some(p => 
-            p.student_id === student.id && 
+
+        const isPaid = payments.some(p =>
+            p.student_id === student.id &&
             p.month_paid_for === targetMonth &&
             p.year === targetYear
         );
@@ -459,7 +459,7 @@ function renderUpdateSection() {
              const targetYearStr = targetYear !== currentYear ? ` ${targetYear}` : '';
              paymentDesc = `paying for <b>${targetMonthName}${targetYearStr}</b>`;
         }
-        
+
         // Fee Label for Update
         const feeDisplay = student.monthly_fee ? `<span style="font-weight:600; color:var(--text-main)">৳${student.monthly_fee}</span>` : '';
 
@@ -472,8 +472,8 @@ function renderUpdateSection() {
                 <div style="display:flex; align-items:center; gap:0.75rem;">
                     ${feeDisplay}
                     <label class="month-checkbox" style="flex-direction:row;width:auto;">
-                        <input type="checkbox" 
-                            ${isPaid ? 'checked' : ''} 
+                        <input type="checkbox"
+                            ${isPaid ? 'checked' : ''}
                             onchange="togglePayment(${student.id}, this.checked)"
                             style="display:block; width:24px; height:24px; accent-color:var(--primary-color);"
                         >
@@ -488,7 +488,7 @@ function renderUpdateSection() {
 
 function renderSettingsSection() {
     settingsListEl.innerHTML = '';
-    
+
     if (students.length === 0) {
         settingsListEl.innerHTML = '<div class="empty-state">No students. Add one above.</div>';
     }
@@ -496,7 +496,7 @@ function renderSettingsSection() {
     students.forEach(student => {
         const card = document.createElement('div');
         card.className = 'student-card';
-        
+
         card.innerHTML = `
             <div class="student-header" style="margin-bottom:0">
                 <div class="student-info">
@@ -517,7 +517,7 @@ function renderSettingsSection() {
 function getTargetMonthIndex(type, clickedIndex) {
     if (type === 'A') return clickedIndex;
     let idx = clickedIndex - 1;
-    if (idx < 0) idx = 11; 
+    if (idx < 0) idx = 11;
     return idx;
 }
 
@@ -548,7 +548,7 @@ window.togglePayment = async (studentId, isChecked) => {
             await db.removePayment(studentId, targetYear, targetMonth);
         }
         await loadData();
-        render(); 
+        render();
     } catch (err) {
         console.error('Payment toggle error:', err);
         alert('Failed to update payment');
@@ -576,7 +576,7 @@ window.openEditModal = (id) => {
 addStudentBtn.addEventListener('click', () => {
     studentForm.reset();
     document.getElementById('studentId').value = '';
-    document.getElementById('studentFee').value = ''; 
+    document.getElementById('studentFee').value = '';
     openModal(false);
 });
 
@@ -593,7 +593,7 @@ studentForm.addEventListener('submit', async (e) => {
 
     try {
         const studentData = { name, payment_type: type, monthly_fee: fee };
-        
+
         if (idInput) {
             studentData.id = parseInt(idInput);
             await db.updateStudent(studentData);
@@ -671,7 +671,7 @@ function setupReports() {
 
     // Populate students dropdown
     function populateStudents() {
-        reportStudentSelect.innerHTML = students.map(s => 
+        reportStudentSelect.innerHTML = students.map(s =>
             `<option value="${s.id}">${s.name}</option>`
         ).join('');
     }
@@ -707,9 +707,9 @@ function setupReports() {
 function generateStudentReport(studentId, year) {
     const student = students.find(s => s.id === studentId);
     const studentPayments = payments.filter(p => p.student_id === studentId);
-    
+
     const doc = new jsPDF();
-    
+
     // Header
     doc.setFillColor(79, 70, 229); // Indigo
     doc.rect(0, 0, 210, 40, 'F');
@@ -718,7 +718,7 @@ function generateStudentReport(studentId, year) {
     doc.text('Student Payment Report', 105, 20, { align: 'center' });
     doc.setFontSize(12);
     doc.text(`Generated: ${new Date().toLocaleDateString('en-GB')}`, 105, 32, { align: 'center' });
-    
+
     // Student Info
     doc.setTextColor(0, 0, 0);
     doc.setFontSize(16);
@@ -757,9 +757,9 @@ function generateStudentReport(studentId, year) {
 
 function generateMonthlyReport(year, month) {
     const monthPayments = payments.filter(p => p.year === year && p.month_paid_for === month);
-    
+
     const doc = new jsPDF();
-    
+
     // Header
     doc.setFillColor(16, 185, 129); // Green
     doc.rect(0, 0, 210, 40, 'F');
@@ -768,7 +768,7 @@ function generateMonthlyReport(year, month) {
     doc.text('Monthly Payment Report', 105, 20, { align: 'center' });
     doc.setFontSize(12);
     doc.text(`${monthNames[month]} ${year}`, 105, 32, { align: 'center' });
-    
+
     // Table
     const tableData = monthPayments.map(p => {
         const student = students.find(s => s.id === p.student_id);
@@ -805,9 +805,9 @@ function generateMonthlyReport(year, month) {
 
 function generateYearlyReport(year) {
     const yearPayments = payments.filter(p => p.year === year);
-    
+
     const doc = new jsPDF();
-    
+
     // Header
     doc.setFillColor(239, 68, 68); // Red
     doc.rect(0, 0, 210, 40, 'F');
@@ -816,7 +816,7 @@ function generateYearlyReport(year) {
     doc.text('Yearly Summary Report', 105, 20, { align: 'center' });
     doc.setFontSize(12);
     doc.text(`Year: ${year}`, 105, 32, { align: 'center' });
-    
+
     // Monthly Breakdown Table
     const monthlyData = monthNames.map((name, i) => {
         const monthPayments = yearPayments.filter(p => p.month_paid_for === i);

@@ -3,9 +3,11 @@ package com.studentpay.manager.domain
 /**
  * Payment type of a student (ported 1:1 from the legacy PWA, app.js: getTargetMonthIndex/getTargetYear).
  *
- * A = "Current Month": a payment collected in month M is for month M.
- * B = "Next Month":    a payment collected in month M is for month M-1 (January wraps to the
- *                      previous year's December). See PaymentRules for the exact rule.
+ * A = "Current Month":  a payment collected in month M is for month M.
+ * B = "Previous Month": a payment collected in month M is for the immediately preceding calendar
+ *                       month, M-1 (collected in January it is for the previous year's December).
+ *                       Collected March 2026 -> February 2026; January 2026 -> December 2025;
+ *                       December 2026 -> November 2026. See PaymentRules.
  */
 enum class PaymentType(val code: String) {
     A("A"),

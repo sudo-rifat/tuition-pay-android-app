@@ -3,6 +3,13 @@ package com.studentpay.manager.domain
 /**
  * The Type A / Type B rule. This is the single place where it lives.
  *
+ *  - Type A = Current Month:  money collected in month M is for month M.
+ *  - Type B = Previous Month: money collected in month M is ALWAYS for the immediately preceding calendar
+ *    month (M-1; collected in January it is for the previous year's December). Never the next month.
+ *      collected March 2026    -> paid for February 2026
+ *      collected January 2026  -> paid for December 2025
+ *      collected December 2026 -> paid for November 2026
+ *
  * Source of truth: legacy app.js
  *   getTargetMonthIndex(type, clickedIndex): A -> clickedIndex; B -> clickedIndex-1, wrapping -1 to 11
  *   getTargetYear(type, clickedIndex, yr):   A -> yr;           B -> yr-1 when clickedIndex == 0, else yr

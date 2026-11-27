@@ -7,8 +7,8 @@ compiled and run (see README). "Device QA" = needs a manual check on a phone.
 |---|---|---|---|
 | 1 | Students: name, `payment_type` A/B, `monthly_fee` (db.js `students`, autoIncrement id) | `StudentEntity`, same field meaning; ids preserved on import | Verified |
 | 2 | Add / edit / delete student; delete also removes payments (`deleteStudent`) | Form screen, ⋮ menu, `ON DELETE CASCADE`; confirm dialog states how many payments go | Device QA |
-| 3 | Type A: pay month = selected month (`getTargetMonthIndex`) | `PaymentRules.targetMonth/Year` | Verified |
-| 4 | Type B: pay month = **previous** month, Jan → previous Dec (`getTargetMonthIndex/Year`) | same function; see README "Type B wording" | Verified |
+| 3 | Type A "Current Month": pay month = selected month (`getTargetMonthIndex`) | `PaymentRules.targetMonth/Year` | Verified |
+| 4 | Type B (old label "Next Month", now **"Previous Month"**): pay month = the immediately preceding month; collected Jan → previous Dec (`getTargetMonthIndex/Year`) | same function, logic unchanged; label corrected everywhere | Verified |
 | 5 | Unique payment per student+year+month (`student_year_month` index) | UNIQUE index; `markPaid` upserts like `addPayment` | Verified (logic) / Device QA |
 | 6 | Tick = add payment with date now; untick = delete (`handleCheckbox`) | Payments screen; untick adds **Undo** | Device QA |
 | 7 | Dashboard stats per selected month: paid, due, total earned (old: Σ *current* fee) | `Dashboard.compute`, now Σ **recorded** amounts | Verified |
