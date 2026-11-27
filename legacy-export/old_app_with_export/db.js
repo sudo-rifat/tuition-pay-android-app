@@ -39,7 +39,7 @@ const db = {
             const transaction = database.transaction(['students'], 'readonly');
             const store = transaction.objectStore('students');
             const request = store.getAll();
-            
+
             request.onsuccess = () => resolve(request.result);
             request.onerror = () => reject(request.error);
         });
@@ -51,7 +51,7 @@ const db = {
             const transaction = database.transaction(['students'], 'readwrite');
             const store = transaction.objectStore('students');
             const request = store.add(student);
-            
+
             request.onsuccess = () => resolve(request.result); // Returns the new ID
             request.onerror = () => reject(request.error);
         });
@@ -63,7 +63,7 @@ const db = {
             const transaction = database.transaction(['students'], 'readwrite');
             const store = transaction.objectStore('students');
             const request = store.put(student); // put updates if key exists
-            
+
             request.onsuccess = () => resolve(request.result);
             request.onerror = () => reject(request.error);
         });
@@ -75,16 +75,16 @@ const db = {
             const transaction = database.transaction(['students', 'payments'], 'readwrite');
             const studentStore = transaction.objectStore('students');
             const paymentStore = transaction.objectStore('payments');
-            
+
             // Delete student
             studentStore.delete(id);
-            
+
             // Delete associated payments
             // Note: In a real app we might want to use a cursor to delete all payments for this student
             // For simplicity/performance in this specific scope, we will query index and delete provided currently low volume
             const index = paymentStore.index('student_id');
             const request = index.openCursor(IDBKeyRange.only(id));
-            
+
             request.onsuccess = (event) => {
                 const cursor = event.target.result;
                 if (cursor) {
@@ -104,7 +104,7 @@ const db = {
             const transaction = database.transaction(['payments'], 'readonly');
             const store = transaction.objectStore('payments');
             const request = store.getAll(); // Get all payments, we can filter in memory or use index if volume grows
-            
+
             request.onsuccess = () => {
                 const allPayments = request.result;
                 // Filter by year if provided, though typically we might just want all or filter by student
@@ -124,11 +124,11 @@ const db = {
             const transaction = database.transaction(['payments'], 'readwrite');
             const store = transaction.objectStore('payments');
             const index = store.index('student_year_month');
-            
+
             // Check if payment already exists
             const key = [payment.student_id, payment.year, payment.month_paid_for];
             const checkRequest = index.get(key);
-            
+
             checkRequest.onsuccess = () => {
                 if (checkRequest.result) {
                     // Already exists, update it (upsert) - always update date to now
@@ -146,7 +146,7 @@ const db = {
                     };
                 }
             };
-            
+
             checkRequest.onerror = () => {
                 console.warn('Payment check error:', checkRequest.error);
                 resolve(null);
@@ -161,7 +161,7 @@ const db = {
             const store = transaction.objectStore('payments');
             const index = store.index('student_year_month');
             const request = index.getKey([studentId, year, monthPaidFor]);
-            
+
             request.onsuccess = () => {
                 const key = request.result;
                 if (key) {
